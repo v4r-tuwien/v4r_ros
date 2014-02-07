@@ -2,7 +2,9 @@
 <package>
   <name>v4r_opencv_cam</name>
   <version>0.1.0</version>
-  <description>The v4r_opencv_cam package</description>
+  <description>The v4r_opencv_cam package is a camera driver package which 
+  wrapped the OpenCV camera driver therefore it works with USB and FireWire
+  cameras.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

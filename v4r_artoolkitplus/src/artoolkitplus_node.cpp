@@ -199,7 +199,7 @@ void ARToolKitPlusNode::initTrackerMultiMarker(const sensor_msgs::CameraInfoCons
     trackerMultiMarker_->setPixelFormat(ARToolKitPlus::PIXEL_FORMAT_LUM);
 
     ARCamera *camera = new ARCamera(camer_info, param_.undist_iterations, param_.input_distorted);
-    if (!trackerMultiMarker_->init(camera, "/home/max/projects/catkin_ws/src/repo/v4r/v4r_artoolkitplus/cfg/markerboard_0000-0011.cfg", 1.0f, 1000.0f)) {
+    if (!trackerMultiMarker_->init(camera, param_.pattern_file.c_str(), 1.0f, 1000.0f)) {
         ROS_ERROR("ERROR: init() failed");
     }
 

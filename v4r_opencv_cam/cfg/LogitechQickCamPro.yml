@@ -1,0 +1,20 @@
+image_width: 640
+image_height: 480
+camera_name: LogitechQickCamPro
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [535.82051, 0, 318.638671, 0, 535.038899, 242.363459, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.045639, -0.109613, 0.000172, 0.005967, 0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [536.181702, 0, 321.588964, 0, 0, 537.991394, 241.937775, 0, 0, 0, 1, 0]

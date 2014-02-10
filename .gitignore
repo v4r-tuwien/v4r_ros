@@ -8,3 +8,4 @@ install_manifest.txt
 *-swp
 .kde*
 .svn
+__init__.py

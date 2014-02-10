@@ -34,17 +34,15 @@ extern "C" {
     unsigned int Pyuv422togray8(unsigned char *input_ptr, unsigned char *output_ptr, unsigned int image_width, unsigned int image_height);
 }
 
-boost::shared_ptr<V4RCamNode> node;
-
 int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "v4r_uvc");
     ros::NodeHandle n;
-    node = boost::shared_ptr<V4RCamNode>(new V4RCamNode(n));
+    V4RCamNode node(n);
     ros::Rate rate(100);
-    while(ros::ok() && node->grab()) {
-        node->publishCamera();
+    while(ros::ok() && node.grab()) {
+        node.publishCamera();
         ros::spinOnce();
         rate.sleep();
     }
@@ -62,6 +60,7 @@ void V4RCamNode::callbackParameters(v4r_uvc::CameraParametersConfig &config, uin
         }
         show_camera_image_ = config.show_camera_image;
     }
+    writeV4lParams();
 }
 
 V4RCamNode::~V4RCamNode()
@@ -83,7 +82,6 @@ V4RCamNode::V4RCamNode(ros::NodeHandle &n)
     }
     reconfigureFnc_ = boost::bind(&V4RCamNode::callbackParameters, this,  _1, _2);
     reconfigureServer_.setCallback(reconfigureFnc_);
-    readV4lParams();
     if(show_camera_image_) {
         showCameraImageThread_ = boost::thread(&V4RCamNode::showCameraImage, this);
     }
@@ -92,12 +90,15 @@ V4RCamNode::V4RCamNode(ros::NodeHandle &n)
 void V4RCamNode::readV4lParams()
 {
     for(unsigned int  i = 0; i < controlEntries_.size(); i++) {
+        const std::string &name = controlEntries_[i]->varName;
+        int default_value = controlEntries_[i]->queryctrl->default_value;
+        int &target_value = controlEntries_[i]->targetValue;
         if(controlEntries_[i]->queryctrl->type == V4L2_CTRL_TYPE_BOOLEAN) {
             bool tmp;
-            n_param_.param<bool>(controlEntries_[i]->varName, tmp, (bool) controlEntries_[i]->queryctrl->default_value);
-            controlEntries_[i]->targetValue = tmp;
+            n_param_.param<bool>(name, tmp, (bool) default_value);
+            target_value = tmp;
         } else {
-            n_param_.param<int>(controlEntries_[i]->varName, controlEntries_[i]->targetValue, controlEntries_[i]->queryctrl->default_value);
+            n_param_.param<int>(name, target_value, default_value);
         }
         v4lset(controlEntries_[i]);
         if(controlEntries_[i]->hasErrorMsg()) ROS_ERROR_STREAM(controlEntries_[i]->varName << ": " << controlEntries_[i]->pullErrorMsg());
@@ -199,25 +200,25 @@ void V4RCamNode::publishCamera()
     case CONVERT_YUV422toRGB:
         cameraImage_.encoding = "rgb8";
         cameraImage_.data.resize(width_ * height_ * 3);
-		cameraImage_.step = cameraInfo_.width * 3;
+        cameraImage_.step = cameraInfo_.width * 3;
         Pyuv422torgb24(pVideoIn_->framebuffer, &cameraImage_.data[0], width_, height_);
         break;
     case CONVERT_YUV422toBGR:
         cameraImage_.encoding = "bgr8";
         cameraImage_.data.resize(width_ * height_ * 3);
-		cameraImage_.step = cameraInfo_.width * 3;
+        cameraImage_.step = cameraInfo_.width * 3;
         Pyuv422tobgr24(pVideoIn_->framebuffer, &cameraImage_.data[0], width_, height_);
         break;
     case CONVERT_YUV422toGray:
         cameraImage_.encoding = "mono8";
         cameraImage_.data.resize(width_ * height_);
-		cameraImage_.step = cameraInfo_.width * 1;
+        cameraImage_.step = cameraInfo_.width * 1;
         Pyuv422togray8(pVideoIn_->framebuffer, &cameraImage_.data[0], width_, height_);
         break;
     default:
         cameraImage_.encoding = "yuv422";
         cameraImage_.data.resize(width_ * height_ * 2);
-        memcpy(&cameraImage_.data[0], pVideoIn_->framebuffer, cameraImage_.data.size());  
+        memcpy(&cameraImage_.data[0], pVideoIn_->framebuffer, cameraImage_.data.size());
     }
     cameraPublisher_.publish(cameraImage_, cameraInfo_);
 }

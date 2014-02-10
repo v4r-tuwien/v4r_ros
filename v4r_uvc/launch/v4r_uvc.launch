@@ -7,8 +7,6 @@
     <param name="convert_image" value="1"/>    
     <param name="camera_info_url" value="file://$(find v4r_uvc)/cfg/logitech.yml" />
     <param name="frame_id" value="camera"/>
-    <param name="brightness" value="30"/>
-    <param name="white_balance_temperature_auto" value="true"/>
   </node>
    
    <!-- undistore image -->

@@ -100,7 +100,7 @@ include_directories(include
  ./cfg/cpp
   )
 
-add_definitions(-DUSE_SDL -O2 -DLINUX -DVERSION=\\"0.2.6-5\\"  -D_GNU_SOURCE=1 -D_REENTRANT )
+add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )
 ## Declare a cpp library
 add_library(v4r_uvc
   src/luvcview/color.c

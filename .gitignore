@@ -5,5 +5,6 @@ cmake_install.cmake
 install_manifest.txt
 *~
 *.kdev4
+*-swp
 .kde*
 .svn

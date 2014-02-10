@@ -60,7 +60,7 @@ void V4RCamNode::callbackParameters(v4r_uvc::CameraParametersConfig &config, uin
         }
         show_camera_image_ = config.show_camera_image;
     }
-    writeV4lParams();
+    //writeV4lParams();
 }
 
 V4RCamNode::~V4RCamNode()

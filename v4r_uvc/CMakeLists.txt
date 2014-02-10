@@ -97,7 +97,6 @@ include_directories(include
   ${catkin_INCLUDE_DIRS}
   /usr/include/SDL
   ./
- ./cfg/cpp
   )
 
 add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )

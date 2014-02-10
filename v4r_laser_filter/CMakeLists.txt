@@ -5,7 +5,7 @@ project(v4r_laser_filter)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp sensor_msgs std_msgs
+  roscpp sensor_msgs std_msgs  rospy dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,6 +67,9 @@ find_package(catkin REQUIRED COMPONENTS
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
+generate_dynamic_reconfigure_options(
+  cfg/LineFilter.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -104,6 +107,7 @@ include_directories(
 ## Declare a cpp executable
 add_executable(v4r_laser_range_filter_node src/v4r_laser_range_filter_node.cpp)
 add_executable(v4r_laser_line_filter_node src/v4r_laser_line_filter_node.cpp)
+add_dependencies(v4r_laser_line_filter_node ${PROJECT_NAME}_gencfg) 
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

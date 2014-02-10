@@ -32,11 +32,46 @@ int main(int argc, char **argv) {
 LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
     :n_ ( n ), n_param_ ( "~" ) {
     sub_ = n_.subscribe("scan", 1000, &LaserLineFilterNode::callback, this);
-    pub_laser = n_.advertise<sensor_msgs::LaserScan>("scan_filtered", 1000);
+    pub_laser_line_split_ = n_.advertise<sensor_msgs::LaserScan>("scan_filtered_split", 1000);
+    pub_laser_line_fit_ = n_.advertise<sensor_msgs::LaserScan>("scan_filtered_split", 1000);
     pub_marker_ =  n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+
+    double tmp;
+
+    n_param_.param<bool>("publish_marker", param_.publish_marker, MX_LASER_LINE_FILTER_PUBLISH_MARKER);
+    ROS_INFO("%s: min_range: %s", n_param_.getNamespace().c_str(), ((param_.publish_marker) ? "true" : "false"));
+
+    n_param_.param<double>("threshold_split", tmp, MX_LASER_LINE_FILTER_THRESHOLD_SPLIT);
+    param_.threshold_split = tmp;
+    ROS_INFO("%s: threshold_split: %4.3f", n_param_.getNamespace().c_str(), param_.threshold_split);
+
+    n_param_.param<double>("min_length", tmp, MX_LASER_LINE_FILTER_MIN_LENGTH);
+    param_.min_length = tmp;
+    ROS_INFO("%s: min_length: %4.3f", n_param_.getNamespace().c_str(), param_.min_length);
+
+    n_param_.param<int>("min_points_per_line",  param_.min_points_per_line, MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE);
+    ROS_INFO("%s: min_points_per_line: %i", n_param_.getNamespace().c_str(), param_.min_points_per_line);
+
+    n_param_.param<double>("min_points_per_meter",  tmp, MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER);
+    param_.min_points_per_meter = tmp;
+    ROS_INFO("%s: min_points_per_meter: %4.3f", n_param_.getNamespace().c_str(), param_.min_points_per_meter);
+
+    reconfigureFnc_ = boost::bind(&LaserLineFilterNode::callbackParameters, this,  _1, _2);
+    reconfigureServer_.setCallback(reconfigureFnc_);
+}
+
+void LaserLineFilterNode::callbackParameters ( v4r_laser_filter::LineFilterConfig &config, uint32_t level ) {
+    param_.publish_marker = config.publish_marker;
+    param_.threshold_split = config.threshold_split;
+    param_.min_length = config.min_length;
+    param_.min_points_per_line = config.min_points;
+    param_.min_points_per_meter = config.min_points_per_meter;
 }
 
 void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg) {
+    if((pub_laser_line_split_.getNumSubscribers() == 0) && (pub_laser_line_split_.getNumSubscribers() == 0)) {
+        //    return;
+    }
     msg_scan_ = *_msg;
     unsigned int nrOfRanges = msg_scan_.ranges.size();
     measurments_.resize(nrOfRanges);
@@ -45,10 +80,26 @@ void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg
         float alpha = msg_scan_.angle_min + (msg_scan_.angle_increment * i);
         measurments_[i].set(alpha, range);
     }
+
     splitStart();
-    lineFitStart();
-    publish_marker();
-    //pub_laser.publish(msg_scan_);
+
+    sensor_msgs::LaserScan msg = *_msg;
+    for (int i = 0; i < nrOfRanges; i++) msg.ranges[i] = nanf("");
+
+    for(unsigned int i = 0; i < lineSegments_.size(); i++) {
+        for(unsigned int idx = lineSegments_[i].idx0; idx < lineSegments_[i].idx1; idx++) {
+            msg.ranges[idx] = msg_scan_.ranges[idx];
+        }
+    }
+    pub_laser_line_split_.publish(msg);
+
+    if(pub_laser_line_split_.getNumSubscribers() > 0) {
+        lineFitStart();
+    }
+
+    if(param_.publish_marker) {
+        publish_marker();
+    }
 }
 
 void LaserLineFilterNode::publish_marker () {
@@ -97,29 +148,28 @@ void LaserLineFilterNode::lineFitStart() {
     lines_.resize(lineSegments_.size());
     for(unsigned int i = 0; i < lineSegments_.size(); i++) {
         points.resize(lineSegments_[i].points.size());
-	
-	float ox = lineSegments_[i].p0.x;
-	float oy = lineSegments_[i].p0.y;
-	float dx = lineSegments_[i].p1.x - lineSegments_[i].p0.x; 
-	float dy = lineSegments_[i].p1.y - lineSegments_[i].p0.y; 
-	float alpha = atan2(dy,dx)+M_PI/4.;
-	float s = sin(alpha), c = cos(alpha);
-	for(unsigned int j = 0; j < points.size(); j++){
-	  const Point &src = lineSegments_[i].points[j];
-	  Point &des = points[j];
-	  des.x =  c * (src.x - ox) + s * (src.y - oy);
-	  des.y = -s * (src.x - ox) + c * (src.y - oy);
-	}
+
+        float ox = lineSegments_[i].p0.x;
+        float oy = lineSegments_[i].p0.y;
+        float dx = lineSegments_[i].p1.x - lineSegments_[i].p0.x;
+        float dy = lineSegments_[i].p1.y - lineSegments_[i].p0.y;
+        float alpha = atan2(dy,dx)+M_PI/4.;
+        float s = sin(alpha), c = cos(alpha);
+        for(unsigned int j = 0; j < points.size(); j++) {
+            const Point &src = lineSegments_[i].points[j];
+            Point &des = points[j];
+            des.x =  c * (src.x - ox) + s * (src.y - oy);
+            des.y = -s * (src.x - ox) + c * (src.y - oy);
+        }
         Point start = points.front(), end = points.back();
         theilsen(points, start, end);
-	Point p0(c * start.x - s * start.y + ox,  s * start.x + c * start.y + oy );
-	Point p1(c * end.x - s * end.y     + ox,  s * end.x   + c * end.y   + oy );
+        Point p0(c * start.x - s * start.y + ox,  s * start.x + c * start.y + oy );
+        Point p1(c * end.x - s * end.y     + ox,  s * end.x   + c * end.y   + oy );
         lines_[i].set(p0,p1);
     }
 }
 void LaserLineFilterNode::splitStart() {
     connectedMeasurments_.clear();
-    lineSegments_.clear();
     lineSegments_.clear();
 
     if(measurments_.size() > 0) {
@@ -168,23 +218,23 @@ void LaserLineFilterNode::split(LineSegment &line) {
     }
     if(dMax > param_.threshold_split) {
         LineSegment l0,l1;
-        if(line.idx0 < idxMax) {
+        if(line.idx0+param_.min_points_per_line < idxMax) {
             l0.set(line.idx0, idxMax, measurments_);
+            split(l0);
         }
-        if(idxMax < line.idx1) {
+        if(idxMax+param_.min_points_per_line < line.idx1) {
             l1.set(idxMax, line.idx1, measurments_);
+            split(l1);
         }
-        split(l0);
-        split(l1);
     } else {
+        if(line.length() < param_.min_length) {
+            return;
+        }
+        if(((float) line.nrSupportPoint()) / line.length() < param_.min_points_per_meter) {
+            return;
+        }
         if(fabs(line.eq.distance(Point(0,0))) < (param_.threshold_split*param_.threshold_split)) {
             // line passed the scan center
-            return;
-        }
-        if((line.idx1 - line.idx0) < param_.min_points) {
-            return;
-        }
-        if(line.length() < param_.min_length) {
             return;
         }
         line.id = lineSegments_.size();
@@ -217,6 +267,16 @@ void LaserLineFilterNode::LineSegment::updatePoints(const std::vector<Measurment
             points.push_back(measurments[i]);
         }
     }
+}
+bool LaserLineFilterNode::LineSegment::isSupportPoint(int idx) {
+    if( (idx < idx0) || (idx > idx1)) {
+        return false;
+    } else {
+        return true;
+    }
+}
+unsigned int LaserLineFilterNode::LineSegment::nrSupportPoint() {
+    return idx1 - idx0 + 2;
 }
 
 void LaserLineFilterNode::LineEq::set(const Point &p0, const Point &p1) {

@@ -23,20 +23,34 @@
 #include <visualization_msgs/Marker.h>
 #include <sstream>
 
+#include <dynamic_reconfigure/server.h>
+#include <v4r_laser_filter/LineFilterConfig.h>
+
 #ifndef V4R_LASER_LINE_FILTER_NODE
 #define V4R_LASER_LINE_FILTER_NODE
+
+
+#define MX_LASER_LINE_FILTER_PUBLISH_MARKER "true"
+#define MX_LASER_LINE_FILTER_THRESHOLD_SPLIT 0.02
+#define MX_LASER_LINE_FILTER_MIN_LENGTH 0.2
+#define MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE 10
+#define MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER 10
 
 /// ROS Node
 class LaserLineFilterNode {
 public:
     struct Parameters {
         Parameters()
-	  : threshold_split(0.05)
-	  , min_length(0.2)
-	  , min_points(20){};
+	  : publish_marker(MX_LASER_LINE_FILTER_PUBLISH_MARKER)
+	  , threshold_split(MX_LASER_LINE_FILTER_THRESHOLD_SPLIT)
+	  , min_length(MX_LASER_LINE_FILTER_MIN_LENGTH)
+	  , min_points_per_line(MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE)
+	  , min_points_per_meter(MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER){};
+	bool publish_marker;
         float threshold_split;
         float min_length;
-        float min_points;
+        int min_points_per_line;
+        float min_points_per_meter;
     };
     class Point {
     public:
@@ -80,12 +94,15 @@ public:
         LineSegment() :Line(), id(0) {};
         void set(unsigned int _idx0, unsigned int _idx1, const std::vector<Measurment> &measurments);
 	void updatePoints(const std::vector<Measurment> &measurments);
+	bool isSupportPoint(int idx);
+	unsigned int nrSupportPoint();
         unsigned int id;
         unsigned int idx0, idx1;
         std::vector<Point> points;
     };
     LaserLineFilterNode ( ros::NodeHandle &n );
     void callback (const sensor_msgs::LaserScan::ConstPtr& msg);
+    void callbackParameters ( v4r_laser_filter::LineFilterConfig &config, uint32_t level );
 private:
     void split(LineSegment &line);
     void splitStart();
@@ -96,9 +113,12 @@ private: // variables
     ros::NodeHandle n_;
     ros::NodeHandle n_param_;
     Parameters param_;
-    ros::Publisher pub_laser;
+    ros::Publisher pub_laser_line_split_;
+    ros::Publisher pub_laser_line_fit_;
     ros::Publisher pub_marker_;
     ros::Subscriber sub_;
+    dynamic_reconfigure::Server<v4r_laser_filter::LineFilterConfig> reconfigureServer_;
+    dynamic_reconfigure::Server<v4r_laser_filter::LineFilterConfig>::CallbackType reconfigureFnc_;
     sensor_msgs::LaserScan msg_scan_;
     visualization_msgs::Marker msg_line_list_;
     std::vector<Measurment> measurments_;

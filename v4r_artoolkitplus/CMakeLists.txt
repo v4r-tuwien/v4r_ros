@@ -106,13 +106,24 @@ include_directories(
 )
 
 INCLUDE_DIRECTORIES(3rdParty/ARToolKitPlus/include)
-ADD_SUBDIRECTORY(3rdParty/ARToolKitPlus/src)
+
+SET(SOURCES
+  3rdParty/ARToolKitPlus/src/MemoryManager.cpp
+  3rdParty/ARToolKitPlus/src/DLL.cpp
+  3rdParty/ARToolKitPlus/src/librpp/rpp.cpp
+  3rdParty/ARToolKitPlus/src/librpp/rpp_quintic.cpp
+  3rdParty/ARToolKitPlus/src/librpp/rpp_vecmat.cpp
+  3rdParty/ARToolKitPlus/src/librpp/rpp_svd.cpp
+  3rdParty/ARToolKitPlus/src/librpp/librpp.cpp
+  3rdParty/ARToolKitPlus/src/extra/Profiler.cpp
+  3rdParty/ARToolKitPlus/src/extra/FixedPoint.cpp)
+	
+
+add_library(ARToolKitPlus SHARED ${SOURCES})
 
 
-add_executable(artoolkitplus_node
-	include/v4r_artoolkitplus/artoolkitplus_defaults.h
-	include/v4r_artoolkitplus/artoolkitplus_node.h
-  src/artoolkitplus_node.cpp
+add_executable(v4r_artoolkitplus_node
+  src/v4r_artoolkitplus_node.cpp
 )
 
 ## Add cmake target dependencies of the executable/library
@@ -120,7 +131,7 @@ add_executable(artoolkitplus_node
 # add_dependencies(v4r_artoolkitplus_node v4r_artoolkitplus_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(artoolkitplus_node
+target_link_libraries(v4r_artoolkitplus_node
   ARToolKitPlus 
   ${catkin_LIBRARIES}
 )
@@ -140,11 +151,12 @@ target_link_libraries(artoolkitplus_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS v4r_artoolkitplus v4r_artoolkitplus_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS ARToolKitPlus
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+install(TARGETS v4r_artoolkitplus_node
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -154,12 +166,16 @@ target_link_libraries(artoolkitplus_node
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  PATTERN ".svn" EXCLUDE)
+install(DIRECTORY cfg/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cfg
+  PATTERN ".svn" EXCLUDE)
+install(DIRECTORY bags/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/bags
+  PATTERN ".svn" EXCLUDE)
+  
 #############
 ## Testing ##
 #############

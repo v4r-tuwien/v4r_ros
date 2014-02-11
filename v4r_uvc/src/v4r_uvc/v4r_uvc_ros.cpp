@@ -21,7 +21,7 @@
 
 #include <camera_info_manager/camera_info_manager.h>
 #include <v4r_uvc/v4r_uvc_defaults.h>
-#include <v4r_uvc/v4r_uvc_node.h>
+#include <v4r_uvc/v4r_uvc_ros.h>
 
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "luvcview/v4l2uvc.h"
@@ -34,34 +34,6 @@ extern "C" {
     unsigned int Pyuv422togray8(unsigned char *input_ptr, unsigned char *output_ptr, unsigned int image_width, unsigned int image_height);
 }
 
-int main(int argc, char **argv)
-{
-
-    ros::init(argc, argv, "v4r_uvc");
-    ros::NodeHandle n;
-    V4RCamNode node(n);
-    ros::Rate rate(100);
-    while(ros::ok() && node.grab()) {
-        node.publishCamera();
-        ros::spinOnce();
-        rate.sleep();
-    }
-    return 0;
-}
-
-
-void V4RCamNode::callbackParameters(v4r_uvc::CameraParametersConfig &config, uint32_t level)
-{
-    readV4lParams();
-    if(show_camera_image_ != config.show_camera_image) {
-        if(config.show_camera_image) {
-            showCameraImageThread_ = boost::thread(&V4RCamNode::showCameraImage, this);
-            ROS_INFO("start show camera image thread");
-        }
-        show_camera_image_ = config.show_camera_image;
-    }
-    //writeV4lParams();
-}
 
 V4RCamNode::~V4RCamNode()
 {
@@ -70,31 +42,36 @@ V4RCamNode::~V4RCamNode()
 }
 
 V4RCamNode::V4RCamNode(ros::NodeHandle &n)
-    : n_(n), n_param_("~"), imageTransport_(n_param_), generate_dynamic_reconfigure_(false), show_camera_image_(false)
+    : n_(n), n_param_("~"), imageTransport_(n_param_), generate_dynamic_reconfigure_(false), show_camera_image_(false), queueRosParamToV4LCommit_(0)
 {
     cameraPublisher_ = imageTransport_.advertiseCamera("image_raw", 1);
     readInitParams();
-    readV4lParams();
     initCamera();
     detectControlEnties();
+    commitRosParamsToV4L(true);
     for(unsigned int  i = 0; i  < controlEntries_.size(); i++) {
         ROS_INFO_STREAM(controlEntries_[i]->getQueryCtrlInfo());
     }
-    reconfigureFnc_ = boost::bind(&V4RCamNode::callbackParameters, this,  _1, _2);
-    reconfigureServer_.setCallback(reconfigureFnc_);
-    if(show_camera_image_) {
-        showCameraImageThread_ = boost::thread(&V4RCamNode::showCameraImage, this);
-    }
 }
 
-void V4RCamNode::readV4lParams()
+void V4RCamNode::commitRosParamsToV4L(bool force)
 {
+    if((!queueRosParamToV4LCommit_) && (!force)) return;
+    bool tmp;
+    n_param_.getParam("show_camera_image", tmp);
+    if(show_camera_image_ != tmp) {
+        show_camera_image_ = tmp;
+        if(show_camera_image_) {
+            showCameraImageThread_ = boost::thread(&V4RCamNode::showCameraImage, this);
+            ROS_INFO("start show camera image thread");
+        }
+    }
+
     for(unsigned int  i = 0; i < controlEntries_.size(); i++) {
         const std::string &name = controlEntries_[i]->varName;
         int default_value = controlEntries_[i]->queryctrl->default_value;
         int &target_value = controlEntries_[i]->targetValue;
         if(controlEntries_[i]->queryctrl->type == V4L2_CTRL_TYPE_BOOLEAN) {
-            bool tmp;
             n_param_.param<bool>(name, tmp, (bool) default_value);
             target_value = tmp;
         } else {
@@ -104,8 +81,10 @@ void V4RCamNode::readV4lParams()
         if(controlEntries_[i]->hasErrorMsg()) ROS_ERROR_STREAM(controlEntries_[i]->varName << ": " << controlEntries_[i]->pullErrorMsg());
         if(controlEntries_[i]->hasInfoMsg()) ROS_INFO_STREAM(controlEntries_[i]->varName << ": " << controlEntries_[i]->pullInfoMsg());
     }
+    //commitV4LToRosParams();
+    queueRosParamToV4LCommit_ = false;
 }
-void V4RCamNode::writeV4lParams()
+void V4RCamNode::commitV4LToRosParams()
 {
     for(unsigned int  i = 0; i < controlEntries_.size(); i++) {
         v4lget(controlEntries_[i]);
@@ -221,6 +200,8 @@ void V4RCamNode::publishCamera()
         memcpy(&cameraImage_.data[0], pVideoIn_->framebuffer, cameraImage_.data.size());
     }
     cameraPublisher_.publish(cameraImage_, cameraInfo_);
+    
+    commitRosParamsToV4L();
 }
 
 

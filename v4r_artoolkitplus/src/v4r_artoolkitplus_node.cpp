@@ -18,8 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <v4r_artoolkitplus/artoolkitplus_node.h>
-#include <v4r_artoolkitplus/artoolkitplus_defaults.h>
+#include <v4r_artoolkitplus/v4r_artoolkitplus_node.h>
+#include <v4r_artoolkitplus/v4r_artoolkitplus_defaults.h>
 
 #include <opencv/highgui.h>
 #include <cv_bridge/cv_bridge.h>

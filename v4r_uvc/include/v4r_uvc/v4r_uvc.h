@@ -75,6 +75,7 @@ public:
      * @return false on an error or problem
      **/
     bool grab(); 
+    ControlEntryPtr getControlEntry(std::string varName);
 protected:
     vdIn *pVideoIn_; /// pointer to the v4l2 device
     std::string videoDevice_; /// device name /dev/videoX

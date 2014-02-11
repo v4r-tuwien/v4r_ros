@@ -69,7 +69,9 @@ find_package( OpenCV REQUIRED )
 
 #add dynamic reconfigure api
 generate_dynamic_reconfigure_options(
-  cfg/CameraParameters.cfg
+  cfg/CameraGeneral.cfg
+  cfg/CameraLogitech.cfg
+  cfg/CameraLogitechSphere.cfg
 )
 
 ###################################
@@ -106,28 +108,51 @@ add_library(v4r_uvc
   src/luvcview/utils.c
   src/luvcview/v4l2uvc.c
 )
-
 target_link_libraries(v4r_uvc m SDL v4l2)
 
+add_library(v4r_uvc_ros
+  src/v4r_uvc/v4r_uvc.cpp 
+  src/v4r_uvc/v4r_uvc_ros.cpp
+)
+
+target_link_libraries(v4r_uvc_ros m v4l2 v4r_uvc v4r_uvc_ros
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES} 
+  ${OpenCV_LIBS}
+)
+
 ## Declare a cpp executable
-add_executable(v4r_uvc_node src/v4r_uvc/v4r_uvc.cpp src/v4r_uvc/v4r_uvc_node.cpp)
+add_executable(v4r_uvc_general_node src/v4r_uvc_general_node.cpp)
+add_executable(v4r_uvc_logitech_node src/v4r_uvc_logitech_node.cpp)
+add_executable(v4r_uvc_logitech_sphere_node src/v4r_uvc_logitech_sphere_node.cpp)
+add_executable(dynamic_reconfigure_test_node src/dynamic_reconfigure_test_node.cpp)
 
 add_executable(update_dynamic_reconfigure src/v4r_uvc/v4r_uvc.cpp src/update_dynamic_reconfigure.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(v4r_uvc_node ${PROJECT_NAME}_gencfg) 
+add_dependencies(v4r_uvc_general_node ${PROJECT_NAME}_gencfg) 
+add_dependencies(v4r_uvc_logitech_node ${PROJECT_NAME}_gencfg) 
+add_dependencies(v4r_uvc_logitech_sphere_node ${PROJECT_NAME}_gencfg) 
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(v4r_uvc_node m v4l2 v4r_uvc 
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES} 
-  ${OpenCV_LIBS})
+target_link_libraries(dynamic_reconfigure_test_node
+  ${catkin_LIBRARIES})
+  
+target_link_libraries(v4r_uvc_general_node v4r_uvc_ros
+  ${catkin_LIBRARIES})
+  
+target_link_libraries(v4r_uvc_logitech_node v4r_uvc_ros
+  ${catkin_LIBRARIES})
+  
+target_link_libraries(v4r_uvc_logitech_sphere_node v4r_uvc_ros
+  ${catkin_LIBRARIES})
   
 target_link_libraries(update_dynamic_reconfigure m v4l2 v4r_uvc 
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES} 
   ${OpenCV_LIBS})
+  
 #############
 ## Install ##
 #############
@@ -143,11 +168,12 @@ target_link_libraries(update_dynamic_reconfigure m v4l2 v4r_uvc
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS v4r_uvc v4r_uvc_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS v4r_uvc v4r_uvc_ros
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+install(TARGETS update_dynamic_reconfigure v4r_uvc_general_node v4r_uvc_logitech_node
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -163,6 +189,12 @@ target_link_libraries(update_dynamic_reconfigure m v4l2 v4r_uvc
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  PATTERN ".svn" EXCLUDE)
+install(DIRECTORY cfg/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cfg
+  PATTERN ".svn" EXCLUDE)
 #############
 ## Testing ##
 #############

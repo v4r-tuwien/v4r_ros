@@ -27,8 +27,6 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <image_transport/camera_publisher.h>
-#include <dynamic_reconfigure/server.h>
-#include <v4r_uvc/CameraParametersConfig.h>
 
 /// ROS camera abstraction
 class V4RCamNode : public V4RCam {
@@ -41,25 +39,23 @@ public:
     V4RCamNode ( ros::NodeHandle &n );
     ~V4RCamNode();
     void publishCamera();
-    void callbackParameters ( v4r_uvc::CameraParametersConfig &config, uint32_t level );
-private:
+    void showCameraImage();
+protected:
     ros::NodeHandle n_;
     ros::NodeHandle n_param_;
     image_transport::ImageTransport  imageTransport_;
     image_transport::CameraPublisher cameraPublisher_;
-    dynamic_reconfigure::Server<v4r_uvc::CameraParametersConfig> reconfigureServer_;
-    dynamic_reconfigure::Server<v4r_uvc::CameraParametersConfig>::CallbackType reconfigureFnc_;
     sensor_msgs::CameraInfo cameraInfo_;
     sensor_msgs::Image cameraImage_;
     bool generate_dynamic_reconfigure_;
     bool show_camera_image_;
+    bool queueRosParamToV4LCommit_;
     boost::thread showCameraImageThread_;
-private:
+protected:
     void readInitParams();
-    void readV4lParams();
-    void writeV4lParams();
+    void commitRosParamsToV4L(bool force = false);
+    void commitV4LToRosParams();
     void loopCamera();
-    void showCameraImage();
     int convert_image_;
 
     /**

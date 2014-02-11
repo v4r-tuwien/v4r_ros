@@ -121,6 +121,7 @@ bool V4RCam::grab()
 
 int V4RCam::v4lgetInfo(ControlEntryPtr entry)
 {
+    Lock myLock(mutexImage_);
     if(entry->valid == false) {
         entry->error_msg << "v4lgetInfo not valid\n";
         return ERROR;
@@ -153,6 +154,7 @@ int V4RCam::v4lgetInfo(ControlEntryPtr entry)
 
 int V4RCam::v4lget(ControlEntryPtr entry)
 {
+    Lock myLock(mutexImage_);
     if(entry->valid == false) {
         entry->error_msg << "v4lget not valid\n";
         return ERROR;
@@ -172,6 +174,7 @@ int V4RCam::v4lget(ControlEntryPtr entry)
 
 int V4RCam::v4lset(ControlEntryPtr entry)
 {
+    Lock myLock(mutexImage_);
     if(entry->valid == false) {
         entry->error_msg << "v4lset not valid\n";
         return ERROR;
@@ -190,6 +193,7 @@ int V4RCam::v4lset(ControlEntryPtr entry)
 }
 int V4RCam::v4lupdate(ControlEntryPtr entry)
 {
+    Lock myLock(mutexImage_);
     if(entry->currentValue == entry->targetValue) {
         return OK;
     }
@@ -436,3 +440,11 @@ int V4RCam::load_controls(const std::string &filename)//struct vdIn *vd)
     }
 }
 
+V4RCam::ControlEntryPtr V4RCam::getControlEntry(std::string varName){
+  for(unsigned int i = 0; i < controlEntries_.size(); i++){
+    if(controlEntries_[i]->varName.compare(varName) == 0){
+      return controlEntries_[i];
+    }
+  }
+  return V4RCam::ControlEntryPtr();
+}

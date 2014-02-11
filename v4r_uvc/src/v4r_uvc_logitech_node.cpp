@@ -19,25 +19,38 @@
  ***************************************************************************/
 
 
-#include <camera_info_manager/camera_info_manager.h>
-#include <v4r_uvc/v4r_uvc_defaults.h>
-#include <v4r_uvc/v4r_uvc_node.h>
+#include <v4r_uvc/v4r_uvc_ros.h>
+#include <dynamic_reconfigure/server.h>
+#include <v4r_uvc/CameraLogitechConfig.h>
 
-#include <boost/interprocess/sync/scoped_lock.hpp>
-#include "luvcview/v4l2uvc.h"
+class V4RLogitechNode : public V4RCamNode {
+public:
+    V4RLogitechNode ( ros::NodeHandle &n ):V4RCamNode(n) {
+        reconfigureFnc_ = boost::bind(&V4RLogitechNode::callbackParameters, this,  _1, _2);
+        reconfigureServer_.setCallback(reconfigureFnc_);
+    }
+    void callbackParameters ( v4r_uvc::CameraLogitechConfig &config, uint32_t level ) {
+	queueRosParamToV4LCommit_ = true;
+    }
+protected:
+    dynamic_reconfigure::Server<v4r_uvc::CameraLogitechConfig> reconfigureServer_;
+    dynamic_reconfigure::Server<v4r_uvc::CameraLogitechConfig>::CallbackType reconfigureFnc_;
+protected:
+};
 
 
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "v4r_uvc");
+    ros::init(argc, argv, "v4r_uvc_logitech");
     ros::NodeHandle n;
-    V4RCamNode v4r_cam(n);
+    V4RLogitechNode node(n);
     ros::Rate rate(100);
-    while(ros::ok() && v4r_cam.grab()) {
-        v4r_cam.publishCamera();
+    while(ros::ok() && node.grab()) {
+        node.publishCamera();
         ros::spinOnce();
         rate.sleep();
     }
     return 0;
 }
+

@@ -99,14 +99,14 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(opencv_cam_node src/opencv_cam_node.cpp)
+add_executable(v4r_opencv_cam_node src/opencv_cam_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(v4r_opencv_cam_node v4r_opencv_cam_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(opencv_cam_node ${catkin_LIBRARIES})
+target_link_libraries(v4r_opencv_cam_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -123,25 +123,27 @@ target_link_libraries(opencv_cam_node ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS v4r_opencv_cam v4r_opencv_cam_node
+install(TARGETS v4r_opencv_cam_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
-# )
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  PATTERN ".svn" EXCLUDE)
+install(DIRECTORY cfg/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cfg
+  PATTERN ".svn" EXCLUDE)
 
 #############
 ## Testing ##

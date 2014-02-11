@@ -1,7 +1,7 @@
 <launch>   
 
   
-  <node pkg="v4r_opencv_cam" type="opencv_cam_node" name="camera" >
+  <node pkg="v4r_opencv_cam" type="v4r_opencv_cam_node" name="camera" >
     <param name="video_device" value="0"/>
     <param name="show_camera_image" value="true"/>  
     <param name="camera_info_url" value="file://$(find v4r_opencv_cam)/cfg/DellPrecisionM4700.yml" />

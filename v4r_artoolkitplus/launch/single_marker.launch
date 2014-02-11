@@ -1,7 +1,7 @@
 <launch>
 
   <!-- laod single detection -->
-  <node pkg="v4r_artoolkitplus" type="artoolkitplus_node" name="arMarker" output="screen">
+  <node pkg="v4r_artoolkitplus" type="v4r_artoolkitplus_node" name="arMarker" output="screen">
 
     <param name="skip_frames" value="0"/> <!-- to skip every x frames 0 means no skip -->
     <param name="show_camera_image" value="true"/> <!-- shows a debug image, it slows the system down -->

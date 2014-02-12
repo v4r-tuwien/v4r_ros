@@ -126,7 +126,6 @@ target_link_libraries(v4r_uvc_ros m v4l2 v4r_uvc v4r_uvc_ros
 add_executable(v4r_uvc_general_node src/v4r_uvc_general_node.cpp)
 add_executable(v4r_uvc_logitech_node src/v4r_uvc_logitech_node.cpp)
 add_executable(v4r_uvc_logitech_sphere_node src/v4r_uvc_logitech_sphere_node.cpp)
-add_executable(dynamic_reconfigure_test_node src/dynamic_reconfigure_test_node.cpp)
 
 add_executable(update_dynamic_reconfigure src/v4r_uvc/v4r_uvc.cpp src/update_dynamic_reconfigure.cpp)
 
@@ -137,9 +136,6 @@ add_dependencies(v4r_uvc_logitech_node ${PROJECT_NAME}_gencfg)
 add_dependencies(v4r_uvc_logitech_sphere_node ${PROJECT_NAME}_gencfg) 
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(dynamic_reconfigure_test_node
-  ${catkin_LIBRARIES})
-  
 target_link_libraries(v4r_uvc_general_node v4r_uvc_ros
   ${catkin_LIBRARIES})
   

@@ -11,6 +11,8 @@ find_package(Boost REQUIRED COMPONENTS thread signals program_options)
 
 find_package( OpenCV REQUIRED )
 
+add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -85,7 +87,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES v4r_uvc
+  LIBRARIES v4r_uvc v4r_uvc_ros
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -101,7 +103,6 @@ include_directories(include
   ./
   )
 
-add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )
 ## Declare a cpp library
 add_library(v4r_uvc
   src/luvcview/color.c

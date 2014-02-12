@@ -32,14 +32,20 @@ int main(int argc, char **argv) {
 LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
     :n_ ( n ), n_param_ ( "~" ) {
     sub_ = n_.subscribe("scan", 1000, &LaserLineFilterNode::callback, this);
-    pub_laser_line_split_ = n_.advertise<sensor_msgs::LaserScan>("scan_filtered_lines", 10);
-    pub_laser_line_fit_ = n_.advertise<sensor_msgs::LaserScan>("scan_fitted_lines", 10);
-    pub_marker_ =  n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+    pub_laser_line_split_ = n_.advertise<sensor_msgs::LaserScan>("scan_lines_split", 1000);
+    pub_laser_line_fit_ = n_.advertise<sensor_msgs::LaserScan>("scan_lines_fit", 1000);
+    pub_marker_ =  n.advertise<visualization_msgs::Marker>("visualization_marker", 1000);
 
     double tmp;
 
     n_param_.param<bool>("publish_marker", param_.publish_marker, MX_LASER_LINE_FILTER_PUBLISH_MARKER);
     ROS_INFO("%s: min_range: %s", n_param_.getNamespace().c_str(), ((param_.publish_marker) ? "true" : "false"));
+
+    n_param_.param<bool>("fit_lines", param_.fit_lines, MX_LASER_LINE_FILTER_FIT_LINES);
+    ROS_INFO("%s: fit_lines: %s", n_param_.getNamespace().c_str(), ((param_.fit_lines) ? "true" : "false"));
+    
+    n_param_.param<bool>("split_scan", param_.split_scan, MX_LASER_LINE_FILTER_SPLIT_SCAN);
+    ROS_INFO("%s: split_scan: %s", n_param_.getNamespace().c_str(), ((param_.split_scan) ? "true" : "false"));
 
     n_param_.param<double>("threshold_split", tmp, MX_LASER_LINE_FILTER_THRESHOLD_SPLIT);
     param_.threshold_split = tmp;
@@ -66,12 +72,11 @@ void LaserLineFilterNode::callbackParameters ( v4r_laser_filter::LineFilterConfi
     param_.min_length = config.min_length;
     param_.min_points_per_line = config.min_points;
     param_.min_points_per_meter = config.min_points_per_meter;
+    param_.fit_lines = config.fit_lines;
+    param_.split_scan = config.split_scan;
 }
 
 void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg) {
-    if((pub_laser_line_split_.getNumSubscribers() == 0) && (pub_laser_line_split_.getNumSubscribers() == 0)) {
-        //    return;
-    }
     msg_scan_ = *_msg;
     unsigned int nrOfRanges = msg_scan_.ranges.size();
     measurments_.resize(nrOfRanges);
@@ -81,22 +86,23 @@ void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg
         measurments_[i].set(alpha, range);
     }
 
-		splitStart();
+    splitStart();
+    sensor_msgs::LaserScan msg = *_msg;
+    if(param_.split_scan) {
+        for (int i = 0; i < nrOfRanges; i++) msg.ranges[i] = nanf("");
 
-		sensor_msgs::LaserScan msg = *_msg;
-		for (int i = 0; i < nrOfRanges; i++) msg.ranges[i] = nanf("");
+        for(unsigned int i = 0; i < lineSegments_.size(); i++) {
+            for(unsigned int idx = lineSegments_[i].idx0; idx < lineSegments_[i].idx1; idx++) {
+                msg.ranges[idx] = msg_scan_.ranges[idx];
+            }
+        }
+    }
+    pub_laser_line_split_.publish(msg);
 
-		for(unsigned int i = 0; i < lineSegments_.size(); i++) {
-			for(unsigned int idx = lineSegments_[i].idx0; idx < lineSegments_[i].idx1; idx++) {
-				msg.ranges[idx] = msg_scan_.ranges[idx];
-			}
-		}
-		pub_laser_line_split_.publish(msg);
 
-		if(pub_laser_line_split_.getNumSubscribers() > 0) {
-			lineFitStart();
-		}
-	
+    if(param_.fit_lines) {
+        lineFitStart();
+    }
 
     if(param_.publish_marker) {
         publish_marker();
@@ -104,7 +110,6 @@ void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg
 }
 
 void LaserLineFilterNode::publish_marker () {
-	if(pub_marker_.getNumSubscribers() == 0) return;
     msg_line_list_.header = msg_scan_.header;
     msg_line_list_.ns = "lines";
     msg_line_list_.action = visualization_msgs::Marker::ADD;
@@ -124,10 +129,9 @@ void LaserLineFilterNode::publish_marker () {
         msg_line_list_.points.push_back(p0);
         msg_line_list_.points.push_back(p1);
     }
-    //msg_line_list_.lifetime;
     pub_marker_.publish(msg_line_list_);
 
-
+    
     msg_line_list_.id = 1;
     msg_line_list_.color.r = 0.0;
     msg_line_list_.color.g = 1.0;
@@ -300,7 +304,7 @@ void LaserLineFilterNode::theilsen(const std::vector<Point> &points, Point &star
     std::vector<float> slops;
     slops.reserve(points.size()*points.size());
     for(unsigned int i = 0; i < points.size(); i++) {
-        for(unsigned int j = 0; j < points.size(); j++) {
+        for(unsigned int j = i; j < points.size(); j++) {
             if(i == j) continue;
             const Point &pi = points[i];
             const Point &pj = points[j];

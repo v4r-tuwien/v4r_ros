@@ -30,11 +30,13 @@
 #define V4R_LASER_LINE_FILTER_NODE
 
 
-#define MX_LASER_LINE_FILTER_PUBLISH_MARKER "true"
+#define MX_LASER_LINE_FILTER_PUBLISH_MARKER true
 #define MX_LASER_LINE_FILTER_THRESHOLD_SPLIT 0.02
 #define MX_LASER_LINE_FILTER_MIN_LENGTH 0.2
 #define MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE 10
 #define MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER 10
+#define MX_LASER_LINE_FILTER_FIT_LINES false
+#define MX_LASER_LINE_FILTER_SPLIT_SCAN true
 
 /// ROS Node
 class LaserLineFilterNode {
@@ -45,12 +47,16 @@ public:
 	  , threshold_split(MX_LASER_LINE_FILTER_THRESHOLD_SPLIT)
 	  , min_length(MX_LASER_LINE_FILTER_MIN_LENGTH)
 	  , min_points_per_line(MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE)
-	  , min_points_per_meter(MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER){};
+	  , min_points_per_meter(MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER)
+	  , split_scan(MX_LASER_LINE_FILTER_SPLIT_SCAN)
+	  , fit_lines(MX_LASER_LINE_FILTER_FIT_LINES){};
 	bool publish_marker;
         float threshold_split;
         float min_length;
         int min_points_per_line;
         float min_points_per_meter;
+	bool split_scan;
+	bool fit_lines;
     };
     class Point {
     public:

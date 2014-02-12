@@ -25,6 +25,7 @@
 
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "luvcview/v4l2uvc.h"
+#include <cv_bridge/cv_bridge.h>
 
 typedef boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> Lock;
 
@@ -45,6 +46,7 @@ V4RCamNode::V4RCamNode(ros::NodeHandle &n)
     : n_(n), n_param_("~"), imageTransport_(n_param_), generate_dynamic_reconfigure_(false), show_camera_image_(false), queueRosParamToV4LCommit_(0)
 {
     cameraPublisher_ = imageTransport_.advertiseCamera("image_raw", 1);
+    cameraThumbnailPublisher_ = imageTransport_.advertise("image_thumbnail", 1);
     readInitParams();
     initCamera();
     detectControlEnties();
@@ -110,9 +112,9 @@ void V4RCamNode::readInitParams()
     n_param_.param<std::string>("avi_filename", aviFilename_, DEFAULT_AVIFILENAME);
     ROS_INFO("avi_filename: %s", aviFilename_.c_str());
     n_param_.param<int>("convert_image_", convert_image_, DEFAULT_CONVERT_IMAGE);
-    ROS_INFO("convert_image: %i", convert_image_);
-    n_param_.param<std::string>("raw_format", raw_format_, DEFAULT_RAW_FORMAT);
-    ROS_INFO("raw_format: %s", raw_format_.c_str());
+    ROS_INFO("convert_image: %i", convert_image_);    
+    n_param_.param<int>("ratioThumbnail", ratioThumbnail_, DEFAULT_RATIO_THUMBNAIL);
+    ROS_INFO("ratioThumbnail: %i", ratioThumbnail_);
     n_param_.param<int>("width", width_, DEFAULT_WIDTH);
     ROS_INFO("width: %i", width_);
     n_param_.param<int>("height", height_, DEFAULT_HEIGHT);
@@ -182,7 +184,7 @@ void V4RCamNode::publishCamera()
     cameraImage_.step = cameraInfo_.width * 2;
     switch(convert_image_) {
     case CONVERT_RAW:
-        cameraImage_.encoding = raw_format_;
+        cameraImage_.encoding = "yuvu";
         cameraImage_.data.resize(pVideoIn_->framesizeIn);
         memcpy(&cameraImage_.data[0], pVideoIn_->framebuffer, cameraImage_.data.size());
         break;
@@ -210,6 +212,24 @@ void V4RCamNode::publishCamera()
         memcpy(&cameraImage_.data[0], pVideoIn_->framebuffer, cameraImage_.data.size());
     }
     cameraPublisher_.publish(cameraImage_, cameraInfo_);
+
+    if(cameraThumbnailPublisher_.getNumSubscribers() > 0) {
+        cameraThumbnail_.header = cameraInfo_.header;
+        cameraThumbnail_.height = cameraInfo_.height = pVideoIn_->height / ratioThumbnail_;
+        cameraThumbnail_.width = cameraInfo_.width = pVideoIn_->width / ratioThumbnail_;
+        cameraThumbnail_.is_bigendian = true;
+        cameraThumbnail_.step = cameraInfo_.width;
+        cameraThumbnail_.encoding = "mono8";
+        cameraThumbnail_.data.resize(cameraThumbnail_.width * cameraThumbnail_.height);
+	unsigned char *des = (unsigned char *) &cameraThumbnail_.data[0];
+        for(unsigned int h = 0; h < cameraThumbnail_.height; h++) {
+	    unsigned char *src = (unsigned char *) pVideoIn_->framebuffer + h*ratioThumbnail_ * pVideoIn_->width*2;
+            for(unsigned int w = 0; w < cameraThumbnail_.width; w++) {
+	      *des++ = src[w * 2*ratioThumbnail_];	      
+            }	      
+        }
+       cameraThumbnailPublisher_.publish(cameraThumbnail_);
+    }
 
     commitRosParamsToV4L();
 }

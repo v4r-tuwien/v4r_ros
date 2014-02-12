@@ -45,8 +45,10 @@ protected:
     ros::NodeHandle n_param_;
     image_transport::ImageTransport  imageTransport_;
     image_transport::CameraPublisher cameraPublisher_;
+    image_transport::Publisher cameraThumbnailPublisher_;
     sensor_msgs::CameraInfo cameraInfo_;
     sensor_msgs::Image cameraImage_;
+    sensor_msgs::Image cameraThumbnail_;
     bool generate_dynamic_reconfigure_;
     bool show_camera_image_;
     bool queueRosParamToV4LCommit_;
@@ -57,7 +59,7 @@ protected:
     void commitV4LToRosParams();
     void loopCamera();
     int convert_image_;
-    std::string raw_format_;
+    int ratioThumbnail_;
 
     /**
      * reads and updates all local control values

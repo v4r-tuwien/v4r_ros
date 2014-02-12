@@ -57,6 +57,7 @@ protected:
     void commitV4LToRosParams();
     void loopCamera();
     int convert_image_;
+    std::string raw_format_;
 
     /**
      * reads and updates all local control values

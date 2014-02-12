@@ -90,6 +90,12 @@ V4RCam::FD V4RCam::initCamera(const std::string &videoDevice)
         printf("Error grabbing first image\n");
         return 0;
     }
+    if((width_ != pVideoIn_->width) || (height_ != pVideoIn_->height) || (fps_ != pVideoIn_->fps)){
+	width_ = pVideoIn_->width;
+	height_ = pVideoIn_->height;
+	fps_ = pVideoIn_->fps;
+        printf("Error: image format not supported changed to: %ipix x %ipix @ %3.1fHz\n", width_, height_, fps_);
+    }
     initLut();
     gettimeofday(&timeLastFrame_, NULL);
     return pVideoIn_->fd;

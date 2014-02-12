@@ -101,6 +101,7 @@ void V4RCamNode::commitV4LToRosParams()
 }
 void V4RCamNode::readInitParams()
 {
+    double tmp;
     ROS_INFO("V4RCamNode::readParams()");
     n_param_.param<bool>("show_camera_image", show_camera_image_, DEFAULT_SHOW_CAMERA_IMAGE);
     ROS_INFO("show_camera_image: %s", ((show_camera_image_) ? "true" : "false"));
@@ -109,7 +110,16 @@ void V4RCamNode::readInitParams()
     n_param_.param<std::string>("avi_filename", aviFilename_, DEFAULT_AVIFILENAME);
     ROS_INFO("avi_filename: %s", aviFilename_.c_str());
     n_param_.param<int>("convert_image_", convert_image_, DEFAULT_CONVERT_IMAGE);
-    ROS_INFO("convert_image_: %i", convert_image_);
+    ROS_INFO("convert_image: %i", convert_image_);
+    n_param_.param<std::string>("raw_format", raw_format_, DEFAULT_RAW_FORMAT);
+    ROS_INFO("raw_format: %s", raw_format_.c_str());
+    n_param_.param<int>("width", width_, DEFAULT_WIDTH);
+    ROS_INFO("width: %i", width_);
+    n_param_.param<int>("height", height_, DEFAULT_HEIGHT);
+    ROS_INFO("height: %i", height_);
+    n_param_.param<double>("fps", tmp, DEFAULT_FPS);
+    fps_ = tmp;
+    ROS_INFO("fps: %4.3f", fps_);
 
     std::string camera_info_url;
     if(n_param_.getParam("camera_info_url", camera_info_url)) {
@@ -166,14 +176,14 @@ void V4RCamNode::publishCamera()
     cameraInfo_.header.stamp.sec = timeLastFrame_.tv_sec;
     cameraInfo_.header.stamp.nsec = timeLastFrame_.tv_usec * 1000;
     cameraImage_.header = cameraInfo_.header;
-    cameraImage_.height = cameraInfo_.height = height_;
-    cameraImage_.width = cameraInfo_.width = width_;
+    cameraImage_.height = cameraInfo_.height = pVideoIn_->height;
+    cameraImage_.width = cameraInfo_.width = pVideoIn_->width;
     cameraImage_.is_bigendian = true;
     cameraImage_.step = cameraInfo_.width * 2;
     switch(convert_image_) {
     case CONVERT_RAW:
-        cameraImage_.encoding = "yuv422";
-        cameraImage_.data.resize(width_ * height_ * 2);
+        cameraImage_.encoding = raw_format_;
+        cameraImage_.data.resize(pVideoIn_->framesizeIn);
         memcpy(&cameraImage_.data[0], pVideoIn_->framebuffer, cameraImage_.data.size());
         break;
     case CONVERT_YUV422toRGB:
@@ -200,7 +210,7 @@ void V4RCamNode::publishCamera()
         memcpy(&cameraImage_.data[0], pVideoIn_->framebuffer, cameraImage_.data.size());
     }
     cameraPublisher_.publish(cameraImage_, cameraInfo_);
-    
+
     commitRosParamsToV4L();
 }
 

@@ -33,7 +33,7 @@
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
 #define DEFAULT_FPS 30.0
-#define DEFAULT_DYNAMIC_RECONFIGURE_FILE cfg/CameraParameters.cfg
+#define DEFAULT_RAW_FORMAT "yuvu"
 
 
 

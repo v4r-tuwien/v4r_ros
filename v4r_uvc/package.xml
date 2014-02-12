@@ -2,7 +2,9 @@
 <package>
   <name>v4r_uvc</name>
   <version>0.0.0</version>
-  <description>The v4r_uvc package</description>
+  <description>The v4r_uvc package is a USB-Camera driver with a dynamic reconfigure interface optimized for logitech cameras.
+    
+ </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

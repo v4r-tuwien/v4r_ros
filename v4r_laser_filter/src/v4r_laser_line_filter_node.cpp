@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include "v4r_laser_filter/v4r_laser_line_filter_node.h"
-
+#include <fstream>
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "LaserFilter");
@@ -34,6 +34,7 @@ LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
     sub_ = n_.subscribe("scan", 1000, &LaserLineFilterNode::callback, this);
     pub_laser_line_split_ = n_.advertise<sensor_msgs::LaserScan>("scan_lines_split", 1000);
     pub_laser_line_fit_ = n_.advertise<sensor_msgs::LaserScan>("scan_lines_fit", 1000);
+    pub_laser_input_ = n_.advertise<sensor_msgs::LaserScan>("scan_input", 1000);
     pub_marker_ =  n.advertise<visualization_msgs::Marker>("visualization_marker", 1000);
 
     double tmp;
@@ -43,13 +44,23 @@ LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
 
     n_param_.param<bool>("fit_lines", param_.fit_lines, MX_LASER_LINE_FILTER_FIT_LINES);
     ROS_INFO("%s: fit_lines: %s", n_param_.getNamespace().c_str(), ((param_.fit_lines) ? "true" : "false"));
-    
+
     n_param_.param<bool>("split_scan", param_.split_scan, MX_LASER_LINE_FILTER_SPLIT_SCAN);
     ROS_INFO("%s: split_scan: %s", n_param_.getNamespace().c_str(), ((param_.split_scan) ? "true" : "false"));
+
+
+    n_param_.getParam("read_scan", param_.read_scan);
+    ROS_INFO("%s: read_scan: %s", n_param_.getNamespace().c_str(), ((param_.read_scan) ? "true" : "false"));
+    n_param_.getParam("write_scan", param_.write_scan);
+    ROS_INFO("%s: write_scan: %s", n_param_.getNamespace().c_str(), ((param_.write_scan) ? "true" : "false"));
+    n_param_.getParam("scan_filename", param_.scan_filename);
+    ROS_INFO("%s: scan_filename: %s", n_param_.getNamespace().c_str(), param_.scan_filename.c_str());
 
     n_param_.param<double>("threshold_split", tmp, MX_LASER_LINE_FILTER_THRESHOLD_SPLIT);
     param_.threshold_split = tmp;
     ROS_INFO("%s: threshold_split: %4.3f", n_param_.getNamespace().c_str(), param_.threshold_split);
+    n_param_.getParam("threshold_split_neighbor", param_.threshold_split_neighbor);
+    ROS_INFO("%s: threshold_split_neighbor: %s", n_param_.getNamespace().c_str(), ((param_.threshold_split_neighbor) ? "true" : "false"));
 
     n_param_.param<double>("min_length", tmp, MX_LASER_LINE_FILTER_MIN_LENGTH);
     param_.min_length = tmp;
@@ -62,6 +73,8 @@ LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
     param_.min_points_per_meter = tmp;
     ROS_INFO("%s: min_points_per_meter: %4.3f", n_param_.getNamespace().c_str(), param_.min_points_per_meter);
 
+
+
     reconfigureFnc_ = boost::bind(&LaserLineFilterNode::callbackParameters, this,  _1, _2);
     reconfigureServer_.setCallback(reconfigureFnc_);
 }
@@ -69,25 +82,71 @@ LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
 void LaserLineFilterNode::callbackParameters ( v4r_laser_filter::LineFilterConfig &config, uint32_t level ) {
     param_.publish_marker = config.publish_marker;
     param_.threshold_split = config.threshold_split;
+    param_.threshold_split_neighbor = config.threshold_split_neighbor;
     param_.min_length = config.min_length;
     param_.min_points_per_line = config.min_points;
     param_.min_points_per_meter = config.min_points_per_meter;
     param_.fit_lines = config.fit_lines;
     param_.split_scan = config.split_scan;
+    param_.write_scan = config.write_scan;
+    param_.read_scan = config.read_scan;
 }
 
+void LaserLineFilterNode::readScan(const std::string &filename, sensor_msgs::LaserScan &msg ) {
+
+    std::ifstream ifs(filename.c_str(), std::ios::in|std::ios::binary);
+    ifs.seekg (0, std::ios::end);
+    std::streampos end = ifs.tellg();
+    ifs.seekg (0, std::ios::beg);
+    std::streampos begin = ifs.tellg();
+
+    uint32_t file_size = end-begin;
+    boost::shared_array<uint8_t> ibuffer(new uint8_t[file_size]);
+    ifs.read((char*) ibuffer.get(), file_size);
+    ros::serialization::IStream istream(ibuffer.get(), file_size);
+    ros::serialization::deserialize(istream, msg);
+    ifs.close();
+}
+void LaserLineFilterNode::writeScan(const std::string &filename, const sensor_msgs::LaserScan &msg ) {
+    std::ofstream ofs(filename.c_str(), std::ios::out|std::ios::binary);
+
+    uint32_t serial_size = ros::serialization::serializationLength(msg);
+    boost::shared_array<uint8_t> obuffer(new uint8_t[serial_size]);
+
+    ros::serialization::OStream ostream(obuffer.get(), serial_size);
+    ros::serialization::serialize(ostream, msg);
+    ofs.write((char*) obuffer.get(), serial_size);
+    ofs.close();
+}
 void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg) {
-    msg_scan_ = *_msg;
+
+    if(param_.write_scan) {
+        writeScan(param_.scan_filename, *_msg);
+    }
+    if(param_.read_scan)  {
+        readScan(param_.scan_filename, msg_scan_);
+    } else {
+        msg_scan_ = *_msg;
+    }
+
+    if(pub_laser_input_.getNumSubscribers() > 0) {
+        pub_laser_input_.publish(msg_scan_);
+    }
+
     unsigned int nrOfRanges = msg_scan_.ranges.size();
     measurments_.resize(nrOfRanges);
+    beams_.resize(nrOfRanges);
+    angle_increment_ = msg_scan_.angle_increment;
+    angle_increment_sin_ = sin(angle_increment_);
     for (int i = 0; i < nrOfRanges; i++) {
         float &range = msg_scan_.ranges[i];
         float alpha = msg_scan_.angle_min + (msg_scan_.angle_increment * i);
+        beams_[i].set(alpha, range);
         measurments_[i].set(alpha, range);
     }
 
     splitStart();
-    sensor_msgs::LaserScan msg = *_msg;
+    sensor_msgs::LaserScan msg = msg_scan_;
     if(param_.split_scan) {
         for (int i = 0; i < nrOfRanges; i++) msg.ranges[i] = nanf("");
 
@@ -131,7 +190,7 @@ void LaserLineFilterNode::publish_marker () {
     }
     pub_marker_.publish(msg_line_list_);
 
-    
+
     msg_line_list_.id = 1;
     msg_line_list_.color.r = 0.0;
     msg_line_list_.color.g = 1.0;
@@ -174,6 +233,7 @@ void LaserLineFilterNode::lineFitStart() {
         lines_[i].set(p0,p1);
     }
 }
+
 void LaserLineFilterNode::splitStart() {
     connectedMeasurments_.clear();
     lineSegments_.clear();
@@ -185,13 +245,21 @@ void LaserLineFilterNode::splitStart() {
 
         while(idx.first < measurments_.size()) {
             idx.second = idx.first + 1;
+            float threshold = 4 * measurments_[idx.second].L2(measurments_[idx.second+1]);
             while((idx.second < measurments_.size()) && (measurments_[idx.second].valid)) {
+                if(param_.threshold_split_neighbor) {	    
+                    float d = measurments_[idx.second].L2(measurments_[idx.second+1]);
+                    if(d > threshold) {
+                        break;
+                    }
+                    threshold = 4 * d;
+                }
                 idx.second++;
             }
-            if((idx.second - idx.first) > 1) {
+            if((idx.second - idx.first) > 2) {
                 connectedMeasurments_.push_back(idx);
             }
-            idx.first = idx.second;
+            idx.first = idx.second+1;
         }
 
         for(unsigned int i = 0; i < connectedMeasurments_.size(); i++) {

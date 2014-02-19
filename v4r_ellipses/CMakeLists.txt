@@ -1,19 +1,23 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(v4r_uvc)
+project(v4r_ellipses)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy dynamic_reconfigure image_transport camera_info_manager)
+find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  dynamic_reconfigure
+  image_geometry
+  image_transport
+  roscpp
+  rospy
+  tf
+)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS thread signals program_options)
-
-
+# find_package(Boost REQUIRED COMPONENTS system)
 
 find_package( OpenCV REQUIRED )
-
-add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -73,9 +77,7 @@ add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )
 
 #add dynamic reconfigure api
 generate_dynamic_reconfigure_options(
-  cfg/CameraGeneral.cfg
-  cfg/CameraLogitech.cfg
-  cfg/CameraLogitechSphere.cfg
+  cfg/EllipsesDetection.cfg
 )
 
 ###################################
@@ -88,70 +90,50 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES v4r_uvc v4r_uvc_ros
-#  CATKIN_DEPENDS other_catkin_pkg
+#  INCLUDE_DIRS include
+#  LIBRARIES v4r_ellipses
+#  CATKIN_DEPENDS cv_bridge dynamic_reconfigure image_geometry image_transport roscpp rospy tf
 #  DEPENDS system_lib
 )
 
 ###########
 ## Build ##
 ###########
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include
+include_directories(include)
+include_directories(
   ${catkin_INCLUDE_DIRS}
-  /usr/include/SDL
-  ./
-  )
+)
 
 ## Declare a cpp library
-add_library(v4r_uvc
-  src/luvcview/color.c
-  src/luvcview/utils.c
-  src/luvcview/v4l2uvc.c
-)
-target_link_libraries(v4r_uvc m SDL v4l2)
-
-add_library(v4r_uvc_ros
-  src/v4r_uvc/v4r_uvc.cpp 
-  src/v4r_uvc/v4r_uvc_ros.cpp
+add_library(v4r_ellipses
+   src/${PROJECT_NAME}/v4r_ellipses.cpp
+   src/${PROJECT_NAME}/v4r_ellipses_parameters.cpp
 )
 
-target_link_libraries(v4r_uvc_ros m v4l2 v4r_uvc v4r_uvc_ros
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES} 
-  ${OpenCV_LIBS}
+add_library(v4r_ellipses_nodelet
+   src/v4r_ellipses_nodelet.cpp
+   src/v4r_ellipses_nodelet_parameters.cpp
 )
 
 ## Declare a cpp executable
-add_executable(v4r_uvc_general_node src/v4r_uvc_general_node.cpp)
-add_executable(v4r_uvc_logitech_node src/v4r_uvc_logitech_node.cpp)
-add_executable(v4r_uvc_logitech_sphere_node src/v4r_uvc_logitech_sphere_node.cpp)
-
-add_executable(update_dynamic_reconfigure src/v4r_uvc/v4r_uvc.cpp src/update_dynamic_reconfigure.cpp)
+add_executable(v4r_ellipses_node src/v4r_ellipses_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(v4r_uvc_general_node ${PROJECT_NAME}_gencfg) 
-add_dependencies(v4r_uvc_logitech_node ${PROJECT_NAME}_gencfg) 
-add_dependencies(v4r_uvc_logitech_sphere_node ${PROJECT_NAME}_gencfg) 
+# add_dependencies(v4r_ellipses_node v4r_ellipses_generate_messages_cpp)
+add_dependencies(v4r_ellipses_nodelet ${PROJECT_NAME}_gencfg) 
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(v4r_uvc_general_node v4r_uvc_ros
-  ${catkin_LIBRARIES})
-  
-target_link_libraries(v4r_uvc_logitech_node v4r_uvc_ros
-  ${catkin_LIBRARIES})
-  
-target_link_libraries(v4r_uvc_logitech_sphere_node v4r_uvc_ros
-  ${catkin_LIBRARIES})
-  
-target_link_libraries(update_dynamic_reconfigure m v4l2 v4r_uvc 
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES} 
-  ${OpenCV_LIBS})
-  
+target_link_libraries(v4r_ellipses_nodelet
+   v4r_ellipses ${catkin_LIBRARIES} ${OpenCV_LIBS}
+)
+target_link_libraries(v4r_ellipses_node
+   v4r_ellipses_nodelet ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -167,12 +149,11 @@ target_link_libraries(update_dynamic_reconfigure m v4l2 v4r_uvc
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS v4r_uvc v4r_uvc_ros
-   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-install(TARGETS update_dynamic_reconfigure v4r_uvc_general_node v4r_uvc_logitech_node
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS v4r_ellipses v4r_ellipses_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -188,18 +169,12 @@ install(TARGETS update_dynamic_reconfigure v4r_uvc_general_node v4r_uvc_logitech
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-install(DIRECTORY launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-  PATTERN ".svn" EXCLUDE)
-install(DIRECTORY cfg/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cfg
-  PATTERN ".svn" EXCLUDE)
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_v4r_uvc.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_v4r_ellipses.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

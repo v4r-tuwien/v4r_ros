@@ -4,7 +4,7 @@ project(v4r_artoolkitplus)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED image_geometry image_transport tf cv_bridge)
+find_package(catkin REQUIRED roscpp rospy image_geometry image_transport tf cv_bridge dynamic_reconfigure)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -77,6 +77,11 @@ add_definitions(-DAR_TRACKER_PARAM=${AR_TRACKER_PARAM})
 #   std_msgs  # Or other packages containing msgs
 # )
 
+#add dynamic reconfigure api
+generate_dynamic_reconfigure_options(
+  cfg/ar_parameter.cfg
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -129,6 +134,7 @@ add_executable(v4r_artoolkitplus_node
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(v4r_artoolkitplus_node v4r_artoolkitplus_generate_messages_cpp)
+add_dependencies(v4r_artoolkitplus_node ${PROJECT_NAME}_gencfg) 
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(v4r_artoolkitplus_node

@@ -14,8 +14,8 @@
    <!-- RVIZ -->
    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find v4r_artoolkitplus)/cfg/rviz/demo.rviz"/>
 
-   <!-- laod detection
+   <!-- laod detection   -->
   <include file="$(find v4r_artoolkitplus)/launch/multi_marker.launch" />
-   -->
+
 </launch>
 

@@ -42,18 +42,22 @@ int main(int argc, char **argv) {
 int ARToolKitPlusNode::matrix2Tf(const ARFloat M[3][4], tf::Transform &transform) {
     tf::Matrix3x3 R(M[0][0], M[0][1], M[0][2], M[1][0], M[1][1], M[1][2], M[2][0], M[2][1], M[2][2]);
     tf::Vector3 T(M[0][3], M[1][3], M[2][3]);
-    transform = tf::Transform(R, T);
+    //transform = tf::Transform(R, T); // this causes a TF to MSG: Quaternion Not Properly Normalized message
+    tf::Quaternion quat;
+    R.getRotation(quat);
+    transform = tf::Transform(quat, T);
 }
-;
 
 ARToolKitPlusNode::ARToolKitPlusNode(ros::NodeHandle & n) :
-        n_(n), n_param_("~"), callback_counter_(0), imageTransport_(n_), trackerSingleMarker_(NULL), trackerMultiMarker_(NULL), logger_(NULL) {
+    n_(n), n_param_("~"), callback_counter_(0), imageTransport_(n_),  logger_(NULL) {
 
     sprintf(namespace_, "%s", n_param_.getNamespace().c_str());
     debugWndName_ = std::string("Debug: ") + n_param_.getNamespace();
     readParam();
     init();
     cameraSubscriber_ = imageTransport_.subscribeCamera( IMAGE_SRC, 1, &ARToolKitPlusNode::imageCallback, this);
+    reconfigureFnc_ = boost::bind(&ARToolKitPlusNode::callbackParameters, this,  _1, _2);
+    reconfigureServer_.setCallback(reconfigureFnc_);
 }
 class MyLogger: public ARToolKitPlus::Logger {
     void artLog(const char* nStr) {
@@ -131,8 +135,6 @@ public:
 
 
 ARToolKitPlusNode::~ARToolKitPlusNode() {
-    if (trackerSingleMarker_ != NULL)
-        delete trackerSingleMarker_;
     if (logger_ != NULL)
         delete logger_;
 }
@@ -140,8 +142,7 @@ ARToolKitPlusNode::~ARToolKitPlusNode() {
 
 
 void ARToolKitPlusNode::initTrackerSingleMarker(const sensor_msgs::CameraInfoConstPtr& camer_info) {
-    if(trackerMultiMarker_) delete trackerSingleMarker_;
-    trackerSingleMarker_ = new ARToolKitPlus::TrackerSingleMarkerImpl<AR_TRACKER_PARAM>(camer_info->width, camer_info->height);
+    trackerSingleMarker_ = boost::shared_ptr<ARToolKitPlus::TrackerSingleMarker>(new ARToolKitPlus::TrackerSingleMarkerImpl<AR_TRACKER_PARAM>(camer_info->width, camer_info->height));
     const char* description = trackerSingleMarker_->getDescription();
     ROS_INFO("%s: compile-time information:\n%s", namespace_, description);
 
@@ -150,7 +151,7 @@ void ARToolKitPlusNode::initTrackerSingleMarker(const sensor_msgs::CameraInfoCon
     trackerSingleMarker_->setPixelFormat(ARToolKitPlus::PIXEL_FORMAT_LUM);
 
     ARCamera *camera = new ARCamera(camer_info, param_.undist_iterations, param_.input_distorted);
-     if (!trackerSingleMarker_->init(camera, 1.0f, 1000.0f)) {
+    if (!trackerSingleMarker_->init(camera, 1.0f, 1000.0f)) {
         ROS_ERROR("ERROR: init() failed");
     }
 
@@ -188,8 +189,7 @@ void ARToolKitPlusNode::initTrackerSingleMarker(const sensor_msgs::CameraInfoCon
 }
 
 void ARToolKitPlusNode::initTrackerMultiMarker(const sensor_msgs::CameraInfoConstPtr& camer_info) {
-    if(trackerMultiMarker_) delete trackerMultiMarker_;
-    trackerMultiMarker_ = new ARToolKitPlus::TrackerMultiMarkerImpl<AR_TRACKER_PARAM>(camer_info->width, camer_info->height);
+    trackerMultiMarker_ = boost::shared_ptr<ARToolKitPlus::TrackerMultiMarker>(new ARToolKitPlus::TrackerMultiMarkerImpl<AR_TRACKER_PARAM>(camer_info->width, camer_info->height));
     const char* description = trackerMultiMarker_->getDescription();
     ROS_INFO("%s: compile-time information:\n%s", namespace_, description);
 
@@ -299,7 +299,7 @@ void ARToolKitPlusNode::publishTf(const std_msgs::Header &header) {
     }
     for (int j = 0; j < arMultiMarkerInfo_.size(); j++) {
         const ARFloat *p = trackerMultiMarker_->getModelViewMatrix();
-        for(int r = 0; r < 3; r++){
+        for(int r = 0; r < 3; r++) {
             pose[r][0] = p[r+0];
             pose[r][1] = p[r+4];
             pose[r][2] = p[r+8];
@@ -350,26 +350,29 @@ void ARToolKitPlusNode::generateDebugImage(cv::Mat &img) {
     }
 }
 
+void ARToolKitPlusNode::callbackParameters ( v4r_artoolkitplus::ARParamConfig &config, uint32_t level ) {
+  show_camera_image_ = config.show_camera_image;
+  param_.skip_frames = config.skip_frames;
+}
+
 void ARToolKitPlusNode::readParam() {
 
     std::string tmp;
+    
+    n_param_.param<bool>("show_camera_image", show_camera_image_, DEFAULT_SHOW_CAMERA_IMAGE);
+    ROS_INFO("%s: show_camera_image:  %s", namespace_, ((show_camera_image_) ? "true" : "false"));
 
     n_param_.param<int>("skip_frames", param_.skip_frames, DEFAULT_SKIP_FRAMES);
     ROS_INFO("%s: skip_frames: %i", namespace_, param_.skip_frames);
 
-    n_param_.param<bool>("show_camera_image", show_camera_image_,
-    DEFAULT_SHOW_CAMERA_IMAGE);
-    ROS_INFO("%s: show_camera_image:  %s", namespace_, ((show_camera_image_) ? "true" : "false"));
 
-    n_param_.param<bool>("tracker_single_marker", param_.tracker_single_marker,
-    DEFAULT_TRACKER_SINGLE_MARKER);
+    n_param_.param<bool>("tracker_single_marker", param_.tracker_single_marker,  DEFAULT_TRACKER_SINGLE_MARKER);
     ROS_INFO("%s: tracker_single_marker:  %s", namespace_, ((param_.tracker_single_marker) ? "true" : "false"));
 
-    n_param_.param<bool>("tracker_multi_marker", param_.tracker_multi_marker,
-    DEFAULT_TRACKER_MULTI_MARKER);
+    n_param_.param<bool>("tracker_multi_marker", param_.tracker_multi_marker, DEFAULT_TRACKER_MULTI_MARKER);
     ROS_INFO("%s: tracker_multi_marker:  %s", namespace_, ((param_.tracker_multi_marker) ? "true" : "false"));
 
-    if(!param_.tracker_multi_marker && !param_.tracker_single_marker){
+    if(!param_.tracker_multi_marker && !param_.tracker_single_marker) {
         ROS_ERROR("%s: at least tracker_multi_marker or tracker_single_marker must be true", namespace_);
     }
 
@@ -378,7 +381,7 @@ void ARToolKitPlusNode::readParam() {
 
     n_param_.param<std::string>("pattern_file", param_.pattern_file, DEFAULT_PATTERN_FILE);
     ROS_INFO("%s: pattern_file: %s", namespace_, param_.pattern_file.c_str());
-    if(!param_.tracker_multi_marker && !param_.pattern_file.empty()){
+    if(!param_.tracker_multi_marker && !param_.pattern_file.empty()) {
         ROS_WARN("%s: tracker_multi_marker must be true in order to use mutli patterns with a pattern file", namespace_);
     }
 
@@ -423,7 +426,7 @@ void ARToolKitPlusNode::readParam() {
         ROS_INFO("%s: undist_mode:  %s", namespace_, tmp.c_str());
     } else {
         ROS_ERROR("%s: undist_mode:  %s does not match any known type use %s, %s  or %s", namespace_, tmp.c_str(), UNDIST_MODE_NONE, UNDIST_MODE_STD,
-                UNDIST_MODE_LUT);
+                  UNDIST_MODE_LUT);
     }
 
     n_param_.param<std::string>("pose_estimation_mode", tmp, DEFAULT_POSE_ESTIMATION_MODE);
@@ -437,7 +440,7 @@ void ARToolKitPlusNode::readParam() {
         ROS_INFO("%s: pose_estimation_mode:  %s", namespace_, tmp.c_str());
     } else {
         ROS_ERROR("%s: pose_estimation_mode:  %s does not match any known type use %s, %s  or %s", namespace_, tmp.c_str(), POSE_ESTIMATION_MODE_NORMAL,
-                POSE_ESTIMATION_MODE_CONT, POSE_ESTIMATION_MODE_RPP);
+                  POSE_ESTIMATION_MODE_CONT, POSE_ESTIMATION_MODE_RPP);
     }
 
     param_.nPattern = -1;
@@ -449,3 +452,4 @@ void ARToolKitPlusNode::init() {
         cv::namedWindow( DEBUG_WINDOWS_NAME, 1);
     }
 }
+

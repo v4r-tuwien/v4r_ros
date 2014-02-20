@@ -36,7 +36,14 @@ public:
         INVALID_CONTOUR_POINTS,
         INVALID_CONTOUR_CONVEX,
         INVALID_ROTATED_RECT_RATIO,
+        INVALID_CONTOUR_MEAN,
+        INVALID_NO_RING,
         INVALID_ELLIPSE
+    };
+    enum PoseDetection {
+        OFF = 0,
+        SIMPLE = 1,
+        OPENCV = 2
     };
     struct Parameters {
         Parameters();
@@ -46,15 +53,17 @@ public:
         int threshold_polygon;
         bool filter_convex;
 	float threshold_rotated_rect_ratio;
+	bool filter_contour_mean;
+        float threshold_contour_mean;
         bool filter_rings;
         float threshold_ring_center;
-        float threshold_ellipse_mean;
-        int filter_ellipse_mean_sample_steps;
         float threshold_ring_ratio;
+        int estimate_pose;
+        float circle_diameter;
     };
     class Ellipse {
     public:
-        Ellipse(): id(-1), boxContour(), boxEllipse(), detection(VALID) {
+        Ellipse(): id(-1), outerRing(-1), innerRing(-1), boxContour(), boxEllipse(), detection(VALID) {
         };
         void init() {
             contour = boost::shared_ptr<std::vector<cv::Point2f> > (new std::vector<cv::Point2f>);
@@ -62,17 +71,19 @@ public:
             distances = boost::shared_ptr<std::vector<float> > (new std::vector<float>);
         }
         int id;
+	int outerRing;
+	int innerRing;
         DetectionState detection;
         cv::RotatedRect boxEllipse;
         cv::Rect boxContour;
         cv::Point2f centerContour;
         float radiusContour;
         float boxEllipseRatio;
+        float radiusEllipseMax;
+        float radiusEllipseMin;
         boost::shared_ptr<std::vector<cv::Point2f> > contour;
         boost::shared_ptr<std::vector<cv::Point> > polygon;
         boost::shared_ptr<std::vector<float> > distances;
-        float distance_mean;
-        float distance_stdev;
     };
     EllipsesDetection (Parameters *parm);
     ~EllipsesDetection();
@@ -84,8 +95,9 @@ protected:
     void createEllipseCanditates ( ) ;
     DetectionState filterContour (Ellipse &ellipse);
     DetectionState filterEllipse (Ellipse &ellipse);
-    bool filterCheckIsRing(const Ellipse &ellipse);
-    void computeDistancesContourToEllipse(Ellipse &ellipse);
+    DetectionState filterContourMean(Ellipse &ellipse);
+    void createRings();
+    void filterShapes();
     std::vector< std::vector<cv::Point> > contours_;
     std::vector<Ellipse> ellipses_;
     std::vector<cv::Mat> serach_windows_;

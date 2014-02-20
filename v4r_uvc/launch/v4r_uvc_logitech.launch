@@ -2,7 +2,7 @@
 
   <arg name="device" default="0" />
   
-  <node pkg="v4r_uvc" type="v4r_uvc_logitech_node" name="camera" >
+  <node pkg="v4r_uvc" type="v4r_uvc_logitech_node" name="camera"  output="screen">
     <param name="video_device" value="/dev/video$(arg device)"/>
     <param name="show_camera_image" value="false"/>  
     <param name="convert_image" value="1"/>    

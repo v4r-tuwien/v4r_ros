@@ -20,11 +20,11 @@
 
 #include "v4r_ellipses_nodelet.h"
 
+
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "ellipses_detection");
-    ros::NodeHandle n;
-    EllipsesDetectionNode my_node(n);
+    V4R::EllipsesDetectionNode my_node;
     my_node.init();
     ros::spin();
     return 0;

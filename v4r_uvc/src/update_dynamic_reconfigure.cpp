@@ -50,6 +50,7 @@ void updateDynamicReconfigureFile(const std::string &filename, const std::vector
 
 
     fprintf(configfile, "gen.add(\"show_camera_image\", bool_t, 0, \"Show camera image\", True)\n");
+    fprintf(configfile, "gen.add(\"camera_freeze\", bool_t, 0, \"Pulbishes the last image over and over again\", True)\n");
     fprintf(configfile, "enum_convert_image = gen.enum([gen.const(\"raw_data\", int_t, 0, \"raw camera Data\"),");
     fprintf(configfile, "  gen.const(\"YUV422toRGB\", int_t, 1, \"converts image to rgb first\"),");
     fprintf(configfile, "  gen.const(\"YUV422toBRG\", int_t, 2, \"converts image to bgr first\"),");

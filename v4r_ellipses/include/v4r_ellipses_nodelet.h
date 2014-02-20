@@ -25,12 +25,17 @@
 #include "ros/ros.h"
 #include <nodelet/nodelet.h>
 #include "v4r_ellipses/v4r_ellipses.h"
+#include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <dynamic_reconfigure/server.h>
 #include <v4r_ellipses/EllipsesDetectionConfig.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <tf/transform_broadcaster.h>
+
+namespace V4R{
 
 /// ROS Node
-class EllipsesDetectionNode : public EllipsesDetection {
+class EllipsesDetectionNode : public EllipsesDetection , public nodelet::Nodelet {
 public:
     struct ParametersNode : public Parameters {
         ParametersNode();
@@ -40,23 +45,33 @@ public:
         dynamic_reconfigure::Server<v4r_ellipses::EllipsesDetectionConfig> reconfigureServer_;
         dynamic_reconfigure::Server<v4r_ellipses::EllipsesDetectionConfig>::CallbackType reconfigureFnc_;
         std::string node_name;
+	bool debug_freeze;
         bool show_camera_image;
         int show_camera_image_waitkey;
+	int image_skip;
     };
-    EllipsesDetectionNode ( ros::NodeHandle &n );
+    EllipsesDetectionNode ( );
     ~EllipsesDetectionNode();
     void init ();
+    virtual void onInit();
     void imageCallback(const sensor_msgs::ImageConstPtr& image_msg,
                        const sensor_msgs::CameraInfoConstPtr& info_msg);
 private: //functions
     const ParametersNode *param();
     void update ();
+    void publishTf(const std_msgs::Header &header);
 private: // variables
     ros::NodeHandle n_;
     unsigned long  callback_counter_;
     image_transport::ImageTransport imageTransport_;
     image_transport::CameraSubscriber  sub_camera_;
-
+    cv_bridge::CvImagePtr image_mono_;
+    sensor_msgs::CameraInfoConstPtr camera_info_;
+    boost::posix_time::ptime timeCallbackReceivedLast_;
+    boost::posix_time::ptime timeCallbackReceived_;
+    boost::posix_time::ptime timeDetectionStart_;
+    boost::posix_time::ptime timeDetectionEnd_;
 };
+}
 
 #endif //V4R_ELLIPSES_NODE_H

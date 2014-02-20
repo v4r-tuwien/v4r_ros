@@ -51,7 +51,9 @@ protected:
     sensor_msgs::Image cameraThumbnail_;
     bool generate_dynamic_reconfigure_;
     bool show_camera_image_;
+    bool camera_freeze_;
     bool queueRosParamToV4LCommit_;
+    bool showCameraImageThreadActive_;
     boost::thread showCameraImageThread_;
 protected:
     void readInitParams();

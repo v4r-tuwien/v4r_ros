@@ -33,6 +33,8 @@ EllipsesDetection::Parameters::Parameters()
 , filter_rings(V4R_ELLIPSES_DEFAULT_FILTER_RING)
 , threshold_ring_center(V4R_ELLIPSES_DEFAULT_THRESHOLD_RING_CENTER)
 , threshold_ring_ratio(V4R_ELLIPSES_DEFAULT_THRESHOLD_RING_RATIO)
-, threshold_ellipse_mean(V4R_ELLIPSES_DEFAULT_THRESHOLD_ELLIPSE_MEAN)
-, filter_ellipse_mean_sample_steps(V4R_ELLIPSES_DEFAULT_FILTER_ELLIPSE_SAMPLE_STEPS){
+, filter_contour_mean(V4R_ELLIPSES_DEFAULT_FILTER_CONTOUR_MEAN)
+, threshold_contour_mean(V4R_ELLIPSES_DEFAULT_THRESHOLD_CONTOUR_MEAN)
+, estimate_pose(V4R_ELLIPSES_DEFAULT_ESTIMATE_POSE)
+, circle_diameter(V4R_ELLIPSES_DEFAULT_CIRCLE_DIAMETER){
 }

@@ -24,6 +24,7 @@
 #include <linux/videodev2.h>
 
 #define DEFAULT_SHOW_CAMERA_IMAGE true
+#define DEFAULT_CAMERA_FREEZE false
 #define DEFAULT_CONVERT_IMAGE 1
 #define DEFAULT_FRAME_ID "UVC_CAM"
 #define DEFAULT_VIDEODEVICE "/dev/video0"

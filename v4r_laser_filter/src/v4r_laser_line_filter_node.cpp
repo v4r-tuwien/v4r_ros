@@ -118,6 +118,7 @@ void LaserLineFilterNode::writeScan(const std::string &filename, const sensor_ms
     ofs.write((char*) obuffer.get(), serial_size);
     ofs.close();
 }
+
 void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg) {
 
     if(param_.write_scan) {

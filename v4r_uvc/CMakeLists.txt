@@ -4,7 +4,7 @@ project(v4r_uvc)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy dynamic_reconfigure image_transport camera_info_manager)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy dynamic_reconfigure image_transport camera_info_manager message_generation)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS thread signals program_options)
@@ -45,11 +45,11 @@ add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
+add_message_files(
+   FILES
+   Sphere.msg
 #   Message2.msg
-# )
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -66,10 +66,10 @@ add_definitions(-DUSE_SDL -DLINUX -D_GNU_SOURCE=1 -D_REENTRANT )
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ )
 
 #add dynamic reconfigure api
 generate_dynamic_reconfigure_options(
@@ -90,7 +90,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES v4r_uvc v4r_uvc_ros
-#  CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 

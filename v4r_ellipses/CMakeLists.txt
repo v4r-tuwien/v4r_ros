@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 find_package( OpenCV REQUIRED )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -108,9 +107,16 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_library(v4r_utils 
+   src/v4r_utils/contour.cpp 
+   src/v4r_utils/canny.cpp
+   src/v4r_utils/camera.cpp
+)
+
 ## Declare a cpp library
 add_library(v4r_ellipses
    src/${PROJECT_NAME}/v4r_ellipses.cpp
+   src/${PROJECT_NAME}/v4r_ellipses_draw.cpp
    src/${PROJECT_NAME}/v4r_ellipses_parameters.cpp
 )
 
@@ -129,7 +135,7 @@ add_dependencies(v4r_ellipses_nodelet ${PROJECT_NAME}_gencfg)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(v4r_ellipses_nodelet
-   v4r_ellipses ${catkin_LIBRARIES} ${OpenCV_LIBS}
+   v4r_ellipses v4r_utils ${catkin_LIBRARIES} ${OpenCV_LIBS}
 )
 target_link_libraries(v4r_ellipses_node
    v4r_ellipses_nodelet ${catkin_LIBRARIES}

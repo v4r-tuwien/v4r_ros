@@ -12,7 +12,7 @@
   </group>
 
    <!-- RVIZ -->
-   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find v4r_artoolkitplus)/cfg/rviz/demo.rviz"/>
+  <include file="$(find v4r_artoolkitplus)/launch/rviz.launch" />
 
    <!-- laod detection   -->
   <include file="$(find v4r_artoolkitplus)/launch/multi_marker.launch" />

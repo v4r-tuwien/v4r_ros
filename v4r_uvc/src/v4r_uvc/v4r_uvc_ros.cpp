@@ -49,6 +49,7 @@ V4RCamNode::V4RCamNode(ros::NodeHandle &n)
     n_param_.setParam("show_camera_image", camera_freeze_);
     cameraPublisher_ = imageTransport_.advertiseCamera("image_raw", 1);
     cameraThumbnailPublisher_ = imageTransport_.advertise("image_thumbnail", 1);
+    subSphere_ = n_.subscribe("sphere", 1000, &V4RCamNode::callbackSphere, this);
     readInitParams();
     initCamera();
     detectControlEnties();
@@ -281,4 +282,10 @@ void V4RCamNode::showCameraImage()
     if(key != -1) {
         pVideoIn_->signalquit = 0;
     }
+}
+
+void V4RCamNode::callbackSphere (const v4r_uvc::SphereConstPtr& msg){
+  
+    ROS_INFO("action %s, pitch = %4.2f, yaw = %4.2f", msg->action.c_str(), msg->pitch, msg->yaw);
+  
 }

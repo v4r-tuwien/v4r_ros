@@ -32,6 +32,7 @@ EllipsesDetectionNode::ParametersNode::ParametersNode()
     , show_camera_image(V4R_ELLIPSES_NODE_DEFAULT_SHOW_CAMERA_IMAGE)
     , show_camera_image_waitkey(V4R_ELLIPSES_NODE_DEFAULT_SHOW_CAMERA_IMAGE_WAITKEY)
     , image_skip(V4R_ELLIPSES_NODE_DEFAULT_IMAGE_SKIP)
+    , tf_prefix(node_name)
     {
     node.getParam("debug_freeze", debug_freeze);
     ROS_INFO("%s - debug_freeze:  %s", node_name.c_str(), (debug_freeze ? "true" : "false"));
@@ -41,6 +42,8 @@ EllipsesDetectionNode::ParametersNode::ParametersNode()
     ROS_INFO("%s - show_camera_image_waitkey: %i", node_name.c_str(), show_camera_image_waitkey);
     node.getParam("image_skip", image_skip);
     ROS_INFO("%s - image_skip: %i", node_name.c_str(), image_skip);
+    node.param<std::string>("tf_prefix", tf_prefix, node_name);
+    ROS_INFO("%s: tf_prefix: %s", node_name.c_str(), tf_prefix.c_str());
 
     reconfigureFnc_ = boost::bind(&EllipsesDetectionNode::ParametersNode::callbackParameters, this ,  _1, _2);
     reconfigureServer_.setCallback(reconfigureFnc_);
@@ -50,12 +53,21 @@ EllipsesDetectionNode::ParametersNode::ParametersNode()
 
 
 void EllipsesDetectionNode::ParametersNode::callbackParameters (v4r_ellipses::EllipsesDetectionConfig &config, uint32_t level ) {
+  int kernal_sizes[] = {1, 3, 5, 7};
   show_camera_image = config.show_camera_image;
   show_camera_image_waitkey = config.show_camera_image_waitkey;
   debug = config.debug;
+  distorted_input = config.distorted_input;
   debug_freeze = config.debug_freeze;
   image_skip = config.image_skip;
-  threshold_edge_detection = config.threshold_edge_detection;
+  edge_detection = (EdgeDetection) config.edge_detection;
+  threshold_edge_detection1 = config.threshold_edge_detection1;
+  threshold_edge_detection2 = config.threshold_edge_detection2;
+  if(config.kernel_size_edge_detection > 7) kernel_size_edge_detection = 7;
+  else if(config.kernel_size_edge_detection < 3) kernel_size_edge_detection = 3;
+  else if(config.kernel_size_edge_detection % 2) kernel_size_edge_detection = config.kernel_size_edge_detection;
+  else kernel_size_edge_detection = config.kernel_size_edge_detection+1;
+  edge_linking = (EdgeLinking) config.edge_linking;
   threshold_contour_min_points = config.threshold_contour_min_points;
   threshold_polygon = config.threshold_polygon;
   filter_convex = config.filter_convex;
@@ -64,7 +76,7 @@ void EllipsesDetectionNode::ParametersNode::callbackParameters (v4r_ellipses::El
   filter_rings = config.filter_rings;
   threshold_ring_center = config.threshold_ring_center;
   threshold_ring_ratio = config.threshold_ring_ratio;
-  estimate_pose = config.estimate_pose;
+  pose_estimation = (PoseEstimation) config.pose_estimation;
   circle_diameter = config.circle_diameter;
   
 }

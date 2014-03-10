@@ -22,10 +22,16 @@
 #include <v4r_ellipses/v4r_ellipses.h>
 #include <v4r_ellipses/v4r_ellipses_defaults.h>
 
+using namespace V4R;
 
 EllipsesDetection::Parameters::Parameters()
 : debug(V4R_ELLIPSES_DEFAULT_DEBUG)
-, threshold_edge_detection(V4R_ELLIPSES_DEFAULT_THRESHOLD_EDGE_DETECTION)
+, distorted_input(V4R_ELLIPSES_DEFAULT_DISTORTED_INPUT)
+, edge_detection( (EdgeDetection) V4R_ELLIPSES_DEFAULT_EDGE_DETECTION)
+, threshold_edge_detection1(V4R_ELLIPSES_DEFAULT_THRESHOLD_EDGE_DETECTION1)
+, threshold_edge_detection2(V4R_ELLIPSES_DEFAULT_THRESHOLD_EDGE_DETECTION2)
+, kernel_size_edge_detection(V4R_ELLIPSES_DEFAULT_KERNEL_SIZE_EDGE_DETECTION)
+, edge_linking((EdgeLinking) V4R_ELLIPSES_DEFAULT_EDGE_LINKING)
 , threshold_contour_min_points(V4R_ELLIPSES_DEFAULT_THRESHOLD_CONTROUR_MIN_POINTS)
 , threshold_polygon(V4R_ELLIPSES_DEFAULT_THRESHOLD_POLYGON)
 , filter_convex(V4R_ELLIPSES_DEFAULT_FILTER_CONVEX)
@@ -35,6 +41,6 @@ EllipsesDetection::Parameters::Parameters()
 , threshold_ring_ratio(V4R_ELLIPSES_DEFAULT_THRESHOLD_RING_RATIO)
 , filter_contour_mean(V4R_ELLIPSES_DEFAULT_FILTER_CONTOUR_MEAN)
 , threshold_contour_mean(V4R_ELLIPSES_DEFAULT_THRESHOLD_CONTOUR_MEAN)
-, estimate_pose(V4R_ELLIPSES_DEFAULT_ESTIMATE_POSE)
+, pose_estimation( (PoseEstimation) V4R_ELLIPSES_DEFAULT_ESTIMATE_POSE)
 , circle_diameter(V4R_ELLIPSES_DEFAULT_CIRCLE_DIAMETER){
 }

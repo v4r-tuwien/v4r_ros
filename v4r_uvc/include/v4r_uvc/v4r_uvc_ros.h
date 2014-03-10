@@ -24,6 +24,7 @@
 
 #include <ros/ros.h>
 #include <v4r_uvc/v4r_uvc.h>
+#include <v4r_uvc/Sphere.h>
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <image_transport/camera_publisher.h>
@@ -49,6 +50,8 @@ protected:
     sensor_msgs::CameraInfo cameraInfo_;
     sensor_msgs::Image cameraImage_;
     sensor_msgs::Image cameraThumbnail_;
+    ros::Subscriber subSphere_;
+    void callbackSphere (const v4r_uvc::SphereConstPtr& msg);
     bool generate_dynamic_reconfigure_;
     bool show_camera_image_;
     bool camera_freeze_;

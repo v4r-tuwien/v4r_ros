@@ -129,6 +129,9 @@ add_library(ARToolKitPlus SHARED ${SOURCES})
 
 add_executable(v4r_artoolkitplus_node
   src/v4r_artoolkitplus_node.cpp
+  src/v4r_artoolkitplus.cpp
+  src/v4r_artoolkitplus_draw.cpp
+  src/v4r_artoolkitplus_parameters.cpp
 )
 
 ## Add cmake target dependencies of the executable/library

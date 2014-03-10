@@ -24,6 +24,7 @@
 
 #include "ros/ros.h"
 #include <nodelet/nodelet.h>
+#include <visualization_msgs/Marker.h>
 #include "v4r_ellipses/v4r_ellipses.h"
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
@@ -32,7 +33,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <tf/transform_broadcaster.h>
 
-namespace V4R{
+namespace V4R {
 
 /// ROS Node
 class EllipsesDetectionNode : public EllipsesDetection , public nodelet::Nodelet {
@@ -45,10 +46,11 @@ public:
         dynamic_reconfigure::Server<v4r_ellipses::EllipsesDetectionConfig> reconfigureServer_;
         dynamic_reconfigure::Server<v4r_ellipses::EllipsesDetectionConfig>::CallbackType reconfigureFnc_;
         std::string node_name;
-	bool debug_freeze;
+        bool debug_freeze;
         bool show_camera_image;
         int show_camera_image_waitkey;
-	int image_skip;
+        int image_skip;
+        std::string tf_prefix;
     };
     EllipsesDetectionNode ( );
     ~EllipsesDetectionNode();
@@ -59,10 +61,17 @@ public:
 private: //functions
     const ParametersNode *param();
     void update ();
-    void publishTf(const std_msgs::Header &header);
+    void publishTf();
+    void publishMarker (const std_msgs::Header &header);
+    void publishPerceptions (const std_msgs::Header &header);
+    void createTransforms(const std_msgs::Header &header);
 private: // variables
     ros::NodeHandle n_;
     unsigned long  callback_counter_;
+    tf::TransformBroadcaster transformBroadcaster_;
+    ros::Publisher pub_marker_;
+    ros::Publisher pub_perceptions_;
+    visualization_msgs::Marker msg_line_list_;
     image_transport::ImageTransport imageTransport_;
     image_transport::CameraSubscriber  sub_camera_;
     cv_bridge::CvImagePtr image_mono_;
@@ -71,6 +80,7 @@ private: // variables
     boost::posix_time::ptime timeCallbackReceived_;
     boost::posix_time::ptime timeDetectionStart_;
     boost::posix_time::ptime timeDetectionEnd_;
+    std::list<tf::StampedTransform> markerTransforms_;
 };
 }
 

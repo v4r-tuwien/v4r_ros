@@ -51,7 +51,6 @@ void EllipsesDetectionNode::init() {
 
 void EllipsesDetectionNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camer_info) {
 
-
     if(callback_counter_ == 0) timeCallbackReceived_ = boost::posix_time::microsec_clock::local_time();
     callback_counter_++;
     if((param()->image_skip >= 0) && (callback_counter_ % (param()->image_skip+1) != 0)) return;

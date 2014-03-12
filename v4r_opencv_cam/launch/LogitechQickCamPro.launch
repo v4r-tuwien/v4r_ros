@@ -1,16 +1,14 @@
 <launch>   
-  <group ns="head_xtion" > 
     <node pkg="v4r_opencv_cam" type="v4r_opencv_cam_node" name="camera" >
-      <param name="video_device" value="0"/>
+      <param name="video_device" value="$(arg device)"/>
       <param name="show_camera_image" value="false"/>  
       <param name="camera_info_url" value="file://$(find v4r_opencv_cam)/cfg/LogitechQickCamPro.yml" />
       <param name="frame_id" value="camera"/>
     </node>
 
-    <!-- undistore image -->
+    <!-- undistore image 
     <group ns="camera" > 
       <node pkg="image_proc" type="image_proc" name="image_proc" />
     </group>
-  </group>
-
+    -->
 </launch>

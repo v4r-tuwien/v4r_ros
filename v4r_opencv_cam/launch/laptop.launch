@@ -1,5 +1,6 @@
 <launch>   
 
+  <arg name="device" default="0" />
   
   <node pkg="v4r_opencv_cam" type="v4r_opencv_cam_node" name="camera" >
     <param name="video_device" value="0"/>

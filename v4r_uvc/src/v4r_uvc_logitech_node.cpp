@@ -29,10 +29,10 @@ public:
         reconfigureFnc_ = boost::bind(&V4RLogitechNode::callbackParameters, this,  _1, _2);
         reconfigureServer_.setCallback(reconfigureFnc_);
     }
-    void callbackParameters ( v4r_uvc::CameraLogitechConfig &config, uint32_t level ) { 
-        show_camera_image_ = config.show_camera_image; 
+    void callbackParameters ( v4r_uvc::CameraLogitechConfig &config, uint32_t level ) {
+        show_camera_image_ = config.show_camera_image;
         camera_freeze_ = config.camera_freeze;
-	queueRosParamToV4LCommit_ = true;
+        queueRosParamToV4LCommit_ = true;
     }
 protected:
     dynamic_reconfigure::Server<v4r_uvc::CameraLogitechConfig> reconfigureServer_;

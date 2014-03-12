@@ -29,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Camera
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -52,25 +52,38 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        arMarker/pattern:
+          Value: true
+        camera:
+          Value: true
+        ellipses_detection/t0-0:
+          Value: true
+        ellipses_detection/t0-1:
+          Value: true
+        ellipses_detection/t0-2:
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        arMarker/pattern:
+          camera:
+            {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: visualization_marker
       Name: Marker
       Namespaces:
-        lines: true
+        nomrals-0: true
+        nomrals-1: true
       Queue Size: 100
       Value: true
     - Class: rviz/Camera
@@ -112,17 +125,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.3248
+      Distance: 9.13238
       Focal Point:
         X: -0.0897539
         Y: -0.250298
         Z: -9.15527e-05
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.659797
+      Pitch: 0.735203
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.660036
+      Yaw: 0.0500276
     Saved: ~
 Window Geometry:
   Camera:
@@ -142,5 +155,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1680
-  X: 0
-  Y: 39
+  X: 3600
+  Y: 35

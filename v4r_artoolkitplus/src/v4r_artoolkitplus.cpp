@@ -21,7 +21,7 @@
 #include <v4r_artoolkitplus/v4r_artoolkitplus.h>
 #include <v4r_artoolkitplus/v4r_artoolkitplus_defaults.h>
 
-#include <v4r_msgs/TransformArrayStamped.h>
+#include <v4r_artoolkitplus/TransformArrayStamped.h>
 
 #include <opencv/highgui.h>
 #include <cv_bridge/cv_bridge.h>

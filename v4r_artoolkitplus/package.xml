@@ -5,45 +5,22 @@
   <description>The v4r_artoolkitplus package is a wrapper around the ARToolKitPlus software library for ROS.
   The ARToolKitPlus is a extended version of ARToolKit's library with a class-based API but with no VRML and camera library.
   It is also optimized to work with a set of precoded marker, so no marker training is needed.
-  The ARToolKitPlus package which was published under GPL2, thanks for that work goes to all people listed in a ./3rdParty/ARToolKitPlus/THANKS.
+  The ARToolKitPlus library was published under GPL2, thanks for that work goes to all people listed in a ./3rdParty/ARToolKitPlus/THANKS.
   More details about ARToolKitPlus package can be found under http://studierstube.org/handheld_ar/artoolkitplus.php   
   </description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
 
 
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
   <license>GPLv2</license>
 
 
-  <!-- Url tags are optional, but mutiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
   <url type="website">http://studierstube.org/handheld_ar/artoolkitplus.php</url>
 
 
-  <!-- Author tags are optional, mutiple are allowed, one per tag -->
-  <!-- Authors do not have to be maintianers, but could be -->
-  <!-- Example: -->
   <author email="markus.bader@tuwien.ac.at">Markus Bader</author>
 
 
-  <!-- The *_depend tags are used to specify dependencies -->
-  <!-- Dependencies can be catkin packages or system dependencies -->
-  <!-- Examples: -->
-  <!-- Use build_depend for packages you need at compile time: -->
-  <!--   <build_depend>message_generation</build_depend> -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use run_depend for packages you need at runtime: -->
-  <!--   <run_depend>message_runtime</run_depend> -->
-  <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
@@ -51,8 +28,10 @@
   <build_depend>image_transport</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>cv_bridge</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>  
-  <build_depend>v4r_msgs</build_depend>  
+  <build_depend>dynamic_reconfigure</build_depend>    
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>  
+  <build_depend>message_generation</build_depend>
   
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -60,17 +39,9 @@
   <run_depend>image_transport</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>cv_bridge</run_depend>
-  <run_depend>v4r_msgs</run_depend>  
-  <run_depend>dynamic_reconfigure</run_depend>  
+  <run_depend>dynamic_reconfigure</run_depend>     
+  <run_depend>std_msgs</run_depend> 
+  <run_depend>geometry_msgs</run_depend> 
+  <run_depend>message_runtime</run_depend>
 
-
-
-  <!-- The export tag contains other, unspecified, tags -->
-  <export>
-    <!-- You can specify that this package is a metapackage here: -->
-    <!-- <metapackage/> -->
-
-    <!-- Other tools can request additional information be placed here -->
-
-  </export>
 </package>

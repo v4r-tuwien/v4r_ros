@@ -32,6 +32,7 @@ EllipsesDetectionNode::ParametersNode::ParametersNode()
     , show_camera_image(V4R_ELLIPSES_NODE_DEFAULT_SHOW_CAMERA_IMAGE)
     , show_camera_image_waitkey(V4R_ELLIPSES_NODE_DEFAULT_SHOW_CAMERA_IMAGE_WAITKEY)
     , image_skip(V4R_ELLIPSES_NODE_DEFAULT_IMAGE_SKIP)
+    , skip_second_tf(V4R_ELLIPSES_NODE_DEFAULT_SKIP_SECOND_TF)
     , tf_prefix(node_name)
     {
     node.getParam("debug_freeze", debug_freeze);
@@ -44,6 +45,8 @@ EllipsesDetectionNode::ParametersNode::ParametersNode()
     ROS_INFO("%s - image_skip: %i", node_name.c_str(), image_skip);
     node.param<std::string>("tf_prefix", tf_prefix, node_name);
     ROS_INFO("%s: tf_prefix: %s", node_name.c_str(), tf_prefix.c_str());
+    node.getParam("skip_second_tf", skip_second_tf);
+    ROS_INFO("%s - skip_second_tf:  %s", node_name.c_str(), (skip_second_tf ? "true" : "false"));
 
     reconfigureFnc_ = boost::bind(&EllipsesDetectionNode::ParametersNode::callbackParameters, this ,  _1, _2);
     reconfigureServer_.setCallback(reconfigureFnc_);
@@ -73,10 +76,13 @@ void EllipsesDetectionNode::ParametersNode::callbackParameters (v4r_ellipses::El
   filter_convex = config.filter_convex;
   threshold_rotated_rect_ratio = config.threshold_rotated_rect_ratio;
   filter_contour_mean = config.filter_contour_mean;
+  threshold_min_radius = config.threshold_min_radius;
+  threshold_max_radius = config.threshold_max_radius;
   filter_rings = config.filter_rings;
   threshold_ring_center = config.threshold_ring_center;
   threshold_ring_ratio = config.threshold_ring_ratio;
   pose_estimation = (PoseEstimation) config.pose_estimation;
   circle_diameter = config.circle_diameter;
+  skip_second_tf = config.skip_second_tf;
   
 }

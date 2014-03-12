@@ -49,7 +49,7 @@ V4RCamNode::V4RCamNode(ros::NodeHandle &n)
     n_param_.setParam("show_camera_image", camera_freeze_);
     cameraPublisher_ = imageTransport_.advertiseCamera("image_raw", 1);
     cameraThumbnailPublisher_ = imageTransport_.advertise("image_thumbnail", 1);
-    subSphere_ = n_.subscribe("sphere", 1000, &V4RCamNode::callbackSphere, this);
+    //subSphere_ = n_.subscribe("sphere", 1000, &V4RCamNode::callbackSphere, this);
     readInitParams();
     initCamera();
     detectControlEnties();

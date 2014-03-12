@@ -42,6 +42,8 @@ public:
         INVALID_CONTOUR_CONVEX,
         INVALID_ROTATED_RECT_RATIO,
         INVALID_CONTOUR_MEAN,
+        INVALID_MIN_RAIDUS,
+        INVALID_MAX_RAIDUS,
         INVALID_NO_RING,
         INVALID_IS_INNER_RING,
         INVALID_ELLIPSE
@@ -77,6 +79,8 @@ public:
         double threshold_rotated_rect_ratio;
         bool filter_contour_mean;
         double threshold_contour_mean;
+        double threshold_min_radius;
+        double threshold_max_radius;
         bool filter_rings;
         double threshold_ring_center;
         double threshold_ring_ratio;
@@ -85,20 +89,27 @@ public:
     };
     class ObliqueCone {
     public:
-        double fx,fy,cx,cy;
-        double radius;
-        cv::Mat_<double> C;
-        cv::Mat_<double> Q;
-        cv::Mat_<double> E;
-        cv::Mat_<double> V;
-        cv::Mat_<double> N;
-        cv::Mat_<double> T;
-        cv::Mat_<double> Pi; 
-        std::vector<cv::Point3d> translations;
-        std::vector<cv::Vec3d> normals;
-        void pose(cv::Mat_<double> intrinsic, cv::Mat_<double> distCoeffs, cv::Mat &nvec, cv::Mat &tvec);
-        void set(cv::RotatedRect box, cv::Mat_<double> intrinsic, double radius);
+        ObliqueCone() {};
+        ObliqueCone(const ObliqueCone& c) {
+            set(c);
+        };
+        cv::Mat_<double> C;  /// ellipse equation
+        cv::Point3d translations[2]; /// two plausible translations solutions
+        cv::Vec3d normals[2];/// two plausible translations solutions
+        cv::Point2d projections[2]; /// two plausible translations solutions
+        cv::Mat_<double> R[2]; /// two plausible roations
+        void set(const ObliqueCone& c) {
+            C = c.C.clone();
+            for(unsigned int i = 0; i < 2; i++) {
+                translations[i] = c.translations[i], normals[i] = c.normals[i], projections[i] = c.projections[i];
+                R[i] = c.R[i].clone();
+            }
+        }
+        void pose(cv::Mat_<double> intrinsic, cv::Mat_<double> distCoeffs, double radius);
+        void set(cv::RotatedRect box, cv::Mat_<double> intrinsic);
         double distance(const cv::Point2d p);
+        void rotation2Normal(int i);
+        void normal2Roation(int i);
     };
     class Ellipse {
     public:
@@ -127,44 +138,25 @@ public:
         boost::shared_ptr<std::vector<cv::Point> > polygon;
         boost::shared_ptr<std::vector<double> > distances;
     };
-    class Pose {
+    class Marker : public ObliqueCone {
     public:
-        Pose(){};
-        Pose(const Pose &p)
-	: id(p.id), 
-	t0(p.t0), 
-	projection(p.projection), 
-	R(p.R.clone()), 
-	rvec(p.rvec.clone()), 
-	tvec(p.tvec.clone()), 
-	nvec(p.nvec.clone()) {};
-        unsigned long id;
-        boost::posix_time::ptime t0;
-        cv::Point2f projection;
-        cv::Mat_<double> R;
-        cv::Mat_<double> rvec;
-        cv::Mat_<double> tvec;
-        cv::Mat_<double> nvec;
-	void roation2Normal();
-	void normal2Roation();
-    };
-    class Marker : public Pose{
-    public:
-        Marker(){};
-	Marker(const Pose &m)
-	: Pose(m), A(cv::Mat_<double>::eye(4,4)) {
-	}
-	Marker(const Marker &m)
-	: Pose(m), A(m.A.clone()) {
-	}
+        Marker() {};
+        Marker(const ObliqueCone &c)
+            : ObliqueCone(c), id(-1), tstamp(), A(cv::Mat_<double>::eye(4,4)) {
+        }
+        Marker(const Marker &c)
+            : ObliqueCone(c), id(c.id), tstamp(c.tstamp), A(c.A.clone()) {
+        }
+        int id;    
+        boost::posix_time::ptime tstamp;
         cv::Mat_<double> A;
-	void update(const boost::posix_time::ptime &t);
+        void update(const boost::posix_time::ptime &t);
     };
     EllipsesDetection (Parameters *parm);
     ~EllipsesDetection();
 protected:
     Parameters *param_;
-    void fit_ellipses_opencv (const cv::Mat &m, const cv::Mat cameraMatrix, const cv::Mat distCoeffs, const cv::Mat projectionMatrix);
+    void fit_ellipses_opencv (const cv::Mat &m, const cv::Mat cameraMatrix, const cv::Mat distCoeffs, const cv::Mat projectionMatrix, const boost::posix_time::ptime &tstamp);
     void edge_detection(const cv::Mat &m);
     void contour_detection();
     void draw_ellipses(cv::Mat &m);
@@ -186,11 +178,12 @@ protected:
     cv::Mat imgSobelDx_;
     cv::Mat imgSobelDy_;
     cv::Mat_<cv::Point2f>  lookupUndistor_;
-    std::list<Pose> perception_;
     std::list<Marker> markers_;
-    unsigned long loop_count;    
+    unsigned long loop_count;
     V4R::Contour contour_detector_;
     V4R::Camera camera_;
+    boost::posix_time::ptime tstamp_;
+    boost::posix_time::ptime tstampLast_;
 };
 };
 #endif // V4R_ELLIPSES_H

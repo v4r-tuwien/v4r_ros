@@ -32,6 +32,8 @@
 #include <v4r_ellipses/EllipsesDetectionConfig.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <tf/transform_broadcaster.h>
+#include <v4r_ellipses/ellipses.h>
+#include <v4r_ellipses/markers.h>
 
 namespace V4R {
 
@@ -50,6 +52,7 @@ public:
         bool show_camera_image;
         int show_camera_image_waitkey;
         int image_skip;
+        bool skip_second_tf;
         std::string tf_prefix;
     };
     EllipsesDetectionNode ( );
@@ -69,7 +72,8 @@ private: // variables
     ros::NodeHandle n_;
     unsigned long  callback_counter_;
     tf::TransformBroadcaster transformBroadcaster_;
-    ros::Publisher pub_marker_;
+    ros::Publisher pub_viz_marker_;
+    ros::Publisher pub_ellipses_;
     ros::Publisher pub_perceptions_;
     visualization_msgs::Marker msg_line_list_;
     image_transport::ImageTransport imageTransport_;

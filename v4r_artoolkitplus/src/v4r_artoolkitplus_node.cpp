@@ -20,7 +20,7 @@
 
 #include <v4r_artoolkitplus/v4r_artoolkitplus.h>
 #include <v4r_artoolkitplus/v4r_artoolkitplus_defaults.h>
-#include <v4r_msgs/TransformArrayStamped.h>
+#include <v4r_artoolkitplus/TransformArrayStamped.h>
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "arMarker");
@@ -49,7 +49,7 @@ void ARToolKitPlusNode::publishTf() {
 
 void ARToolKitPlusNode::publishPerceptions (const std_msgs::Header &header) {
     if(pub_perceptions_.getNumSubscribers() < 1) return;
-    v4r_msgs::TransformArrayStamped msg;
+    v4r_artoolkitplus::TransformArrayStamped msg;
     if(markerTransforms_.size() > 0) {
         msg.header = header;
         msg.child_frame_id.resize(markerTransforms_.size());

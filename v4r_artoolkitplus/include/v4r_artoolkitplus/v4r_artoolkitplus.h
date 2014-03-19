@@ -37,6 +37,31 @@ namespace ARToolKitPlus {
 class TrackerSingleMarker;
 class TrackerMultiMarker;
 class Tracker;
+
+
+
+class ARTag2D : public ARMarkerInfo {
+public:
+  static const int NO_PATTERN = -1;
+  static const int PATTERN = 0;
+  int belongsToPattern;
+  ARTag2D()
+   : belongsToPattern(NO_PATTERN) {
+  }
+  ARTag2D(const ARTag2D &tag)
+   : belongsToPattern(tag.belongsToPattern) {
+    setARMarkerInfo(tag);
+  }
+  ARTag2D(const ARMarkerInfo &tag)
+   : belongsToPattern(NO_PATTERN) {
+    setARMarkerInfo(tag);
+  }
+  void setARMarkerInfo(const ARMarkerInfo &tag) {
+    ARMarkerInfo *p = (ARMarkerInfo *) this;
+    *p = tag;
+  }
+};
+
 };
 
 
@@ -83,7 +108,7 @@ private:
     tf::TransformBroadcaster transformBroadcaster_;
     boost::shared_ptr<ARToolKitPlus::TrackerSingleMarker> trackerSingleMarker_;
     boost::shared_ptr<ARToolKitPlus::TrackerMultiMarker> trackerMultiMarker_;
-    std::vector<ARToolKitPlus::ARMarkerInfo> arMarkerInfo_;
+    std::vector<ARToolKitPlus::ARTag2D> arTags2D_;
     std::list<tf::StampedTransform> markerTransforms_;    
     const ARToolKitPlus::ARMultiMarkerInfoT *arMultiMarkerInfo_;
     MyLogger *logger_;

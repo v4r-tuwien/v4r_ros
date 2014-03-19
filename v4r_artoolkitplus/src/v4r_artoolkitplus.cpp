@@ -266,9 +266,9 @@ void ARToolKitPlusNode::imageCallback(const sensor_msgs::ImageConstPtr& image_ms
         int nNumMarkers;
         int markerId = trackerSingleMarker_->calc(img->image.data, param_.nPattern, param_.nUpdateMatrix, &arMarkerInfo, &nNumMarkers);
         float conf = (float) trackerSingleMarker_->getConfidence();
-        arMarkerInfo_.resize(nNumMarkers);
-        for(int i = 0; i < arMarkerInfo_.size(); i++) {
-            arMarkerInfo_[i] = arMarkerInfo[i];
+        arTags2D_.resize(nNumMarkers);
+        for(int i = 0; i < arTags2D_.size(); i++) {
+            arTags2D_[i] = arMarkerInfo[i];
         }
     }
     if (param_.tracker_multi_marker) {
@@ -277,20 +277,19 @@ void ARToolKitPlusNode::imageCallback(const sensor_msgs::ImageConstPtr& image_ms
         int nNumMarkers = trackerMultiMarker_->calc(img->image.data);
 
         arMultiMarkerInfo_ = trackerMultiMarker_->getMultiMarkerConfig();
-        arMarkerInfo_.clear();
-        arMarkerInfo_.reserve(trackerMultiMarker_->getNumDetectedMarkers());
+        arTags2D_.clear();
+        arTags2D_.reserve(trackerMultiMarker_->getNumDetectedMarkers());
         /// Sort out marker which are part of multi marker patterns
         for(int i = 0; i < trackerMultiMarker_->getNumDetectedMarkers(); i++) {
-            bool isSingleMarker = true;
             const ARToolKitPlus::ARMarkerInfo &singleMarker = trackerMultiMarker_->getDetectedMarker(i);
-            for(int j = 0; (j < arMultiMarkerInfo_->marker_num) && isSingleMarker; j++) {
+            arTags2D_.push_back(singleMarker);
+            arTags2D_.back().belongsToPattern = ARToolKitPlus::ARTag2D::NO_PATTERN;
+            for(int j = 0; (j < arMultiMarkerInfo_->marker_num); j++) {
                 const ARToolKitPlus::ARMultiEachMarkerInfoT &multiMarker = arMultiMarkerInfo_->marker[j];
                 if(singleMarker.id == multiMarker.patt_id) {
-                    isSingleMarker = false;
+                    arTags2D_.back().belongsToPattern = ARToolKitPlus::ARTag2D::PATTERN;
+                    break;
                 }
-            }
-            if(isSingleMarker) {
-                arMarkerInfo_.push_back(singleMarker);
             }
         }
     }
@@ -332,16 +331,17 @@ void ARToolKitPlusNode::estimatePoses(const std_msgs::Header &header) {
             }
             matrix2Tf(pose, trans);
             std::string child_frame = tf::resolve(param_.tf_prefix, param_.pattern_frame);
-            st = tf::StampedTransform(trans.inverse(), header.stamp, child_frame, header.frame_id);
+            st = tf::StampedTransform(trans, header.stamp, header.frame_id, child_frame);
             markerTransforms_.push_back(st);
         }
     }
-    for(std::vector<ARToolKitPlus::ARMarkerInfo>::iterator it =  arMarkerInfo_.begin(); it != arMarkerInfo_.end(); it++) {
-        ARToolKitPlus::ARMarkerInfo &m = *it;
-        if (it->id < 0)
+    for(std::vector<ARToolKitPlus::ARTag2D>::iterator arTag =  arTags2D_.begin(); arTag != arTags2D_.end(); arTag++) {
+        if (arTag->id < 0)
             continue;
-        sprintf(frame, "t%i", m.id);
-        trackerMultiMarker_->executeSingleMarkerPoseEstimator(&m, center, param_.patternWidth, pose);
+        if (arTag->belongsToPattern != ARToolKitPlus::ARTag2D::NO_PATTERN)
+            continue;
+        sprintf(frame, "t%i", arTag->id);
+        trackerMultiMarker_->executeSingleMarkerPoseEstimator(&(*arTag), center, param_.patternWidth, pose);
         matrix2Tf(pose, trans);
         std::string child_frame = tf::resolve(param_.tf_prefix, frame);
         st = tf::StampedTransform(trans, header.stamp, header.frame_id, child_frame);

@@ -74,6 +74,7 @@ void EllipsesDetectionNode::ParametersNode::callbackParameters (v4r_ellipses::El
   threshold_contour_min_points = config.threshold_contour_min_points;
   threshold_polygon = config.threshold_polygon;
   filter_convex = config.filter_convex;
+  ellipse_redefinement = config.ellipse_redefinement;
   threshold_rotated_rect_ratio = config.threshold_rotated_rect_ratio;
   filter_contour_mean = config.filter_contour_mean;
   threshold_min_radius = config.threshold_min_radius;

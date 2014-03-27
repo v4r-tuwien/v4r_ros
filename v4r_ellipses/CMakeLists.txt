@@ -20,6 +20,8 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package( OpenCV REQUIRED )
 
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
 
 add_message_files(
   DIRECTORY msg
@@ -50,7 +52,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES v4r_ellipses
 #  CATKIN_DEPENDS cv_bridge dynamic_reconfigure image_geometry image_transport roscpp rospy tf
-#  DEPENDS system_lib
+  DEPENDS eigen opencv
 )
 
 ###########
@@ -68,6 +70,7 @@ add_library(v4r_utils
    src/v4r_utils/contour.cpp 
    src/v4r_utils/canny.cpp
    src/v4r_utils/camera.cpp
+   src/v4r_utils/ellipse_refinement.cpp
 )
 
 ## Declare a cpp library

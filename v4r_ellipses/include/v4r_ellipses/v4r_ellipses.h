@@ -77,6 +77,7 @@ public:
         int threshold_polygon;
         bool filter_convex;
         double threshold_rotated_rect_ratio;
+        bool ellipse_redefinement;
         bool filter_contour_mean;
         double threshold_contour_mean;
         double threshold_min_radius;
@@ -164,7 +165,8 @@ protected:
     void createEllipseCanditates () ;
     DetectionState filterContour (Ellipse &ellipse);
     DetectionState filterEllipse (Ellipse &ellipse);
-    DetectionState filterContourMean(Ellipse &ellipse);
+    DetectionState filterContourMean(Ellipse &ellipse);    
+    DetectionState EllipseRedefinement(Ellipse &ellipse);
     void estimatePoses();
     void createRings();
     void filterShapes();

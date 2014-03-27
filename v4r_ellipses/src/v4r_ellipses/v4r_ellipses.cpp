@@ -25,6 +25,7 @@
 #include <v4r_ellipses/v4r_ellipses_defaults.h>
 #include <boost/foreach.hpp>
 #include "v4r_utils/canny.h"
+#include "v4r_utils/ellipse_refinement.h"
 
 using namespace V4R;
 
@@ -156,7 +157,25 @@ void EllipsesDetection::fit_ellipses_opencv (const cv::Mat &m, const cv::Mat cam
         if(filterEllipse (ellipse) != VALID) continue;
         if(filterContourMean(ellipse)  != VALID) continue;
     }
+    if(param_->ellipse_redefinement &&!imgSobelDx_.empty() && !imgSobelDy_.empty()) {
+        for(unsigned int i = 0; i < ellipses_.size(); i++) {
+            EllipseRedefinement(ellipses_[i]);
+        }
+    }
 }
+
+V4R::EllipseRefinement ellipseRefinementDual;
+
+EllipsesDetection::DetectionState EllipsesDetection::EllipseRedefinement(Ellipse &ellipse) {
+    if(ellipse.detection != VALID) return ellipse.detection;
+    
+    V4R::EllipseRefinement::Ellipse e;
+    e.setEllipse(ellipse.boxEllipse);
+    ellipseRefinementDual.refine(imgSobelDx_, imgSobelDy_, *ellipse.contourUndistort, e);
+    e.get(ellipse.boxEllipse);  
+    return ellipse.detection;
+}
+
 
 EllipsesDetection::DetectionState EllipsesDetection::filterEllipse(Ellipse &ellipse) {
     if(ellipse.detection != VALID) return ellipse.detection;
@@ -239,16 +258,16 @@ void EllipsesDetection::estimatePoses() {
     double radius = param_->circle_diameter / 2.0;
     cv::Mat objectPoints  = (cv::Mat_<double>(5,3) << 0, 0, 0, -radius, +radius, 0, +radius, +radius, 0, +radius, -radius, 0, -radius, -radius, 0);
     for(std::vector<Ellipse>::iterator it = ellipses_.begin(); it != ellipses_.end(); it++) {
-        Ellipse &ellipse = *it;  
-      if(ellipse.detection != VALID) continue;
-        
+        Ellipse &ellipse = *it;
+        if(ellipse.detection != VALID) continue;
+
         ellipse.boxEllipse.points(pi);
         cv::Point2f& pc = ellipse.boxEllipse.center;
         cv::Mat imagePoints = (cv::Mat_<double>(5,2) << pc.x, pc.y, pi[0].x, pi[0].y, pi[1].x, pi[1].y, pi[2].x, pi[2].y, pi[3].x, pi[3].y);
         switch(param_->pose_estimation) {
         case POSE_ESTIMATION_SOLVEPNP:
             cv::solvePnP(objectPoints, imagePoints, camera_.cameraMatrix, camera_.distCoeffs, rvec, tvec);
-            cv::Rodrigues(rvec, ellipse.cone.R[0]);            
+            cv::Rodrigues(rvec, ellipse.cone.R[0]);
             ellipse.cone.translations[0].x = tvec(0), ellipse.cone.translations[0].y = tvec(1), ellipse.cone.translations[0].z = tvec(2);
             ellipse.cone.rotation2Normal(0);
             ellipse.cone.R[1] = ellipse.cone.R[0].clone();

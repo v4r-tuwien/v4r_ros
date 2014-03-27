@@ -131,6 +131,7 @@ ARToolKitPlusNode::Parameter::Parameter()
                   ARTOOLKITPLUS_POSE_ESTIMATION_MODE_CONT, ARTOOLKITPLUS_POSE_ESTIMATION_MODE_RPP);
     }
 
+    
     nPattern = -1;
     nUpdateMatrix = true;
     reconfigureFnc_ = boost::bind(&ARToolKitPlusNode::Parameter::callbackParameters, this ,  _1, _2);

@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "v4r_laser_filter/v4r_laser_line_filter_node.h"
+
 #include <fstream>
 int main(int argc, char **argv) {
 
@@ -36,16 +37,20 @@ LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
     pub_laser_line_fit_ = n_.advertise<sensor_msgs::LaserScan>("scan_lines_fit", 1000);
     pub_laser_input_ = n_.advertise<sensor_msgs::LaserScan>("scan_input", 1000);
     pub_marker_ =  n.advertise<visualization_msgs::Marker>("visualization_marker", 1000);
+    pub_laser_lines_ = n_.advertise<geometry_msgs::PolygonStamped>("line_segments", 1000);
 
     double tmp;
 
-    n_param_.param<bool>("publish_marker", param_.publish_marker, MX_LASER_LINE_FILTER_PUBLISH_MARKER);
-    ROS_INFO("%s: min_range: %s", n_param_.getNamespace().c_str(), ((param_.publish_marker) ? "true" : "false"));
+    n_param_.param<bool>("publish_marker", param_.publish_marker, V4R_LASER_LINE_FILTER_PUBLISH_MARKER);
+    ROS_INFO("%s: publish_marker: %s", n_param_.getNamespace().c_str(), ((param_.publish_marker) ? "true" : "false"));
 
-    n_param_.param<bool>("fit_lines", param_.fit_lines, MX_LASER_LINE_FILTER_FIT_LINES);
+    n_param_.param<bool>("publish_lines", param_.publish_lines, V4R_LASER_LINE_FILTER_PUBLISH_LINES);
+    ROS_INFO("%s: publish_lines: %s", n_param_.getNamespace().c_str(), ((param_.publish_lines) ? "true" : "false"));
+
+    n_param_.param<bool>("fit_lines", param_.fit_lines, V4R_LASER_LINE_FILTER_FIT_LINES);
     ROS_INFO("%s: fit_lines: %s", n_param_.getNamespace().c_str(), ((param_.fit_lines) ? "true" : "false"));
 
-    n_param_.param<bool>("split_scan", param_.split_scan, MX_LASER_LINE_FILTER_SPLIT_SCAN);
+    n_param_.param<bool>("split_scan", param_.split_scan, V4R_LASER_LINE_FILTER_SPLIT_SCAN);
     ROS_INFO("%s: split_scan: %s", n_param_.getNamespace().c_str(), ((param_.split_scan) ? "true" : "false"));
 
 
@@ -56,20 +61,20 @@ LaserLineFilterNode::LaserLineFilterNode ( ros::NodeHandle &n )
     n_param_.getParam("scan_filename", param_.scan_filename);
     ROS_INFO("%s: scan_filename: %s", n_param_.getNamespace().c_str(), param_.scan_filename.c_str());
 
-    n_param_.param<double>("threshold_split", tmp, MX_LASER_LINE_FILTER_THRESHOLD_SPLIT);
+    n_param_.param<double>("threshold_split", tmp, V4R_LASER_LINE_FILTER_THRESHOLD_SPLIT);
     param_.threshold_split = tmp;
     ROS_INFO("%s: threshold_split: %4.3f", n_param_.getNamespace().c_str(), param_.threshold_split);
     n_param_.getParam("threshold_split_neighbor", param_.threshold_split_neighbor);
     ROS_INFO("%s: threshold_split_neighbor: %s", n_param_.getNamespace().c_str(), ((param_.threshold_split_neighbor) ? "true" : "false"));
 
-    n_param_.param<double>("min_length", tmp, MX_LASER_LINE_FILTER_MIN_LENGTH);
+    n_param_.param<double>("min_length", tmp, V4R_LASER_LINE_FILTER_MIN_LENGTH);
     param_.min_length = tmp;
     ROS_INFO("%s: min_length: %4.3f", n_param_.getNamespace().c_str(), param_.min_length);
 
-    n_param_.param<int>("min_points_per_line",  param_.min_points_per_line, MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE);
+    n_param_.param<int>("min_points_per_line",  param_.min_points_per_line, V4R_LASER_LINE_FILTER_MIN_POINTS_PER_LINE);
     ROS_INFO("%s: min_points_per_line: %i", n_param_.getNamespace().c_str(), param_.min_points_per_line);
 
-    n_param_.param<double>("min_points_per_meter",  tmp, MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER);
+    n_param_.param<double>("min_points_per_meter",  tmp, V4R_LASER_LINE_FILTER_MIN_POINTS_PER_METER);
     param_.min_points_per_meter = tmp;
     ROS_INFO("%s: min_points_per_meter: %4.3f", n_param_.getNamespace().c_str(), param_.min_points_per_meter);
 
@@ -166,6 +171,20 @@ void LaserLineFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _msg
 
     if(param_.publish_marker) {
         publish_marker();
+    }
+    
+    if(param_.publish_lines){
+      msg_lines.header = msg.header;
+      msg_lines.polygon.points.clear();
+      msg_lines.polygon.points.reserve(lineSegments_.size()*2);
+      geometry_msgs::Point32 p0, p1;
+      for(unsigned int i = 0; i < lineSegments_.size(); i++) {
+          p0.x = lineSegments_[i].p0.x, p0.y = lineSegments_[i].p0.y, p0.z = 0;
+          p1.x = lineSegments_[i].p1.x, p1.y = lineSegments_[i].p1.y, p0.z = 0;
+          msg_lines.polygon.points.push_back(p0);
+          msg_lines.polygon.points.push_back(p1);
+      }    
+      pub_laser_lines_.publish(msg_lines);
     }
 }
 

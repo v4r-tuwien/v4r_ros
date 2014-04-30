@@ -20,6 +20,7 @@
 
 #include "ros/ros.h"
 #include <sensor_msgs/LaserScan.h>
+#include <geometry_msgs/PolygonStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <sstream>
 
@@ -30,33 +31,36 @@
 #define V4R_LASER_LINE_FILTER_NODE
 
 
-#define MX_LASER_LINE_FILTER_PUBLISH_MARKER false
-#define MX_LASER_LINE_FILTER_THRESHOLD_SPLIT 0.02
-#define MX_LASER_LINE_FILTER_MIN_LENGTH 0.2
-#define MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE 10
-#define MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER 10
-#define MX_LASER_LINE_FILTER_FIT_LINES false
-#define MX_LASER_LINE_FILTER_SPLIT_SCAN true
+#define V4R_LASER_LINE_FILTER_PUBLISH_MARKER false
+#define V4R_LASER_LINE_FILTER_PUBLISH_LINES true
+#define V4R_LASER_LINE_FILTER_THRESHOLD_SPLIT 0.02
+#define V4R_LASER_LINE_FILTER_MIN_LENGTH 0.2
+#define V4R_LASER_LINE_FILTER_MIN_POINTS_PER_LINE 20
+#define V4R_LASER_LINE_FILTER_MIN_POINTS_PER_METER 10
+#define V4R_LASER_LINE_FILTER_FIT_LINES false
+#define V4R_LASER_LINE_FILTER_SPLIT_SCAN true
 
 /// ROS Node
 class LaserLineFilterNode {
 public:
     struct Parameters {
         Parameters()
-            : publish_marker(MX_LASER_LINE_FILTER_PUBLISH_MARKER)
-            , threshold_split(MX_LASER_LINE_FILTER_THRESHOLD_SPLIT)
-	    , threshold_split_neighbor(true)
-            , min_length(MX_LASER_LINE_FILTER_MIN_LENGTH)
-            , min_points_per_line(MX_LASER_LINE_FILTER_MIN_POINTS_PER_LINE)
-            , min_points_per_meter(MX_LASER_LINE_FILTER_MIN_POINTS_PER_METER)
-            , split_scan(MX_LASER_LINE_FILTER_SPLIT_SCAN)
-            , fit_lines(MX_LASER_LINE_FILTER_FIT_LINES)
+            : publish_marker(V4R_LASER_LINE_FILTER_PUBLISH_MARKER)
+            , publish_lines(V4R_LASER_LINE_FILTER_PUBLISH_LINES)
+            , threshold_split(V4R_LASER_LINE_FILTER_THRESHOLD_SPLIT)
+            , threshold_split_neighbor(true)
+            , min_length(V4R_LASER_LINE_FILTER_MIN_LENGTH)
+            , min_points_per_line(V4R_LASER_LINE_FILTER_MIN_POINTS_PER_LINE)
+            , min_points_per_meter(V4R_LASER_LINE_FILTER_MIN_POINTS_PER_METER)
+            , split_scan(V4R_LASER_LINE_FILTER_SPLIT_SCAN)
+            , fit_lines(V4R_LASER_LINE_FILTER_FIT_LINES)
             , write_scan(false)
             , read_scan(false)
             , scan_filename("/tmp/scan.bin") {};
         bool publish_marker;
+        bool publish_lines;
         float threshold_split;
-	bool threshold_split_neighbor;
+        bool threshold_split_neighbor;
         float min_length;
         int min_points_per_line;
         float min_points_per_meter;
@@ -73,7 +77,7 @@ public:
         float x, y;
         float L2(const Point &p) {
             float dx = x-p.x, dy = y-p.y;
-	    return sqrt(dx*dx+dy*dy);
+            return sqrt(dx*dx+dy*dy);
         }
         float L1(const Point &p) {
             return fabs(x-p.x) + fabs(y-p.y);
@@ -145,6 +149,7 @@ private: // variables
     ros::NodeHandle n_;
     ros::NodeHandle n_param_;
     Parameters param_;
+    ros::Publisher pub_laser_lines_;
     ros::Publisher pub_laser_line_split_;
     ros::Publisher pub_laser_line_fit_;
     ros::Publisher pub_laser_input_;
@@ -153,6 +158,7 @@ private: // variables
     dynamic_reconfigure::Server<v4r_laser_filter::LineFilterConfig> reconfigureServer_;
     dynamic_reconfigure::Server<v4r_laser_filter::LineFilterConfig>::CallbackType reconfigureFnc_;
     sensor_msgs::LaserScan msg_scan_;
+    geometry_msgs::PolygonStamped msg_lines;
     visualization_msgs::Marker msg_line_list_;
     std::vector<Beam> beams_;
     std::vector<Measurment> measurments_;

@@ -158,7 +158,7 @@ ARMM_TEMPL_TRACKER::calc(const unsigned char* nImage)
 	if(executeMultiMarkerPoseEstimator(tmp_markers, tmpNumDetected, config) < 0)
 		return 0;
 
-	convertTransformationMatrixToOpenGLStyle(config->trans, this->gl_para);
+	this->convertTransformationMatrixToOpenGLStyle(config->trans, this->gl_para);
 	return numDetected;
 }
 

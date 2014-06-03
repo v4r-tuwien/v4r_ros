@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(OpenCV REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -69,6 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 generate_dynamic_reconfigure_options(
   cfg/LineFilter.cfg
+  cfg/CornerFilter.cfg
 )
 
 ###################################
@@ -84,7 +86,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES v4r_laser_filter
 #  CATKIN_DEPENDS roscpp
-#  DEPENDS system_lib
+   DEPENDS eigen
 )
 
 ###########
@@ -105,18 +107,27 @@ include_directories(
 # )
 
 ## Declare a cpp executable
+add_library(v4r_laser_filter_utils src/v4r_laser_filter_utils.cpp)
+add_executable(v4r_laser_corner_filter_node src/v4r_laser_corner_filter_node.cpp)
 add_executable(v4r_laser_range_filter_node src/v4r_laser_range_filter_node.cpp)
 add_executable(v4r_laser_line_filter_node src/v4r_laser_line_filter_node.cpp)
 add_dependencies(v4r_laser_line_filter_node ${PROJECT_NAME}_gencfg) 
+add_dependencies(v4r_laser_corner_filter_node ${PROJECT_NAME}_gencfg) 
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(v4r_laser_filter_node v4r_laser_filter_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
+target_link_libraries(v4r_laser_filter_utils
+   ${catkin_LIBRARIES} 
+ )
+target_link_libraries(v4r_laser_corner_filter_node
+  v4r_laser_filter_utils ${catkin_LIBRARIES} 
+ )
 target_link_libraries(v4r_laser_range_filter_node
-   ${catkin_LIBRARIES}
+   v4r_laser_filter_utils ${catkin_LIBRARIES} 
  )
 target_link_libraries(v4r_laser_line_filter_node
-   ${catkin_LIBRARIES}
+   v4r_laser_filter_utils ${catkin_LIBRARIES}
  )

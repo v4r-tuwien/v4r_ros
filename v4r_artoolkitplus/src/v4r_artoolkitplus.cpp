@@ -341,7 +341,8 @@ void ARToolKitPlusNode::estimatePoses(const std_msgs::Header &header) {
         if (arTag->belongsToPattern != ARToolKitPlus::ARTag2D::NO_PATTERN)
             continue;
         sprintf(frame, "t%i", arTag->id);
-        trackerMultiMarker_->executeSingleMarkerPoseEstimator(&(*arTag), center, param_.patternWidth, pose);
+        if(trackerMultiMarker_) trackerMultiMarker_->executeSingleMarkerPoseEstimator(&(*arTag), center, param_.patternWidth, pose);
+        if(trackerSingleMarker_) trackerSingleMarker_->executeSingleMarkerPoseEstimator(&(*arTag), center, param_.patternWidth, pose);
         matrix2Tf(pose, trans);
         std::string child_frame = tf::resolve(param_.tf_prefix, frame);
         st = tf::StampedTransform(trans, header.stamp, header.frame_id, child_frame);

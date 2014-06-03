@@ -26,6 +26,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <v4r_laser_filter/LineFilterConfig.h>
+#include <v4r_laser_filter/v4r_laser_filter_utils.h>
 
 #ifndef V4R_LASER_LINE_FILTER_NODE
 #define V4R_LASER_LINE_FILTER_NODE
@@ -70,81 +71,16 @@ public:
         bool read_scan;
         std::string scan_filename;
     };
-    class Point {
-    public:
-        Point() {};
-        Point(float _x, float _y): x(_x), y(_y) {};
-        float x, y;
-        float L2(const Point &p) {
-            float dx = x-p.x, dy = y-p.y;
-            return sqrt(dx*dx+dy*dy);
-        }
-        float L1(const Point &p) {
-            return fabs(x-p.x) + fabs(y-p.y);
-        }
-    };
-    class Beam {
-    public:
-        Beam() {};
-        void set(float _alpha, float _range) {
-            alpha = _alpha, range = _range;
-        }
-        float alpha;
-        float range;
-    };
-    class Measurment : public Point {
-    public:
-        Measurment(): Point() {};
-        void set(float _alpha, float _range) {
-            if(isnan(_range) || isinf(_range)) {
-                valid = false;
-            } else {
-                x = cos(_alpha) * _range;
-                y = sin(_alpha) * _range;
-                valid = true;
-            }
-        }
-        bool valid;
-    };
-    class LineEq {
-    public:
-        LineEq() {};
-        LineEq(float _a, float _b, float _c): a(_a), b(_b), c(_c) {};
-        void set(const Point &p0, const Point &p1);
-        float distance(const Point &p);
-        float a, b, c;
-    };
-    class Line {
-    public:
-        Line() {};
-        Line(const Point &_p0, const Point &_p1);
-        void set(const Point &_p0, const Point &_p1);
-        float length();
-        Point p0, p1;
-        LineEq eq;
-    };
-    class LineSegment : public Line {
-    public:
-        LineSegment() :Line(), id(0) {};
-        void set(unsigned int _idx0, unsigned int _idx1, const std::vector<Measurment> &measurments);
-        void updatePoints(const std::vector<Measurment> &measurments);
-        bool isSupportPoint(int idx);
-        unsigned int nrSupportPoint();
-        unsigned int id;
-        unsigned int idx0, idx1;
-        std::vector<Point> points;
-    };
     LaserLineFilterNode ( ros::NodeHandle &n );
     void callback (const sensor_msgs::LaserScan::ConstPtr& msg);
     void callbackParameters ( v4r_laser_filter::LineFilterConfig &config, uint32_t level );
 private:
-    void split(LineSegment &line);
+    void split(LaserFilter::LineSegment &line);
     void splitStart();
     void readScan(const std::string &filename, sensor_msgs::LaserScan &msg );
     void writeScan(const std::string &filename, const sensor_msgs::LaserScan &msg );
     void lineFitStart();
     void publish_marker();
-    void theilsen(const std::vector<Point> &points, Point &start, Point &end);
 private: // variables
     ros::NodeHandle n_;
     ros::NodeHandle n_param_;
@@ -160,11 +96,11 @@ private: // variables
     sensor_msgs::LaserScan msg_scan_;
     geometry_msgs::PolygonStamped msg_lines;
     visualization_msgs::Marker msg_line_list_;
-    std::vector<Beam> beams_;
-    std::vector<Measurment> measurments_;
+    std::vector<LaserFilter::Beam> beams_;
+    std::vector<LaserFilter::Measurment> measurments_;
     std::vector<std::pair<unsigned int, unsigned int> > connectedMeasurments_;
-    std::vector<LineSegment> lineSegments_;
-    std::vector<Line> lines_;
+    std::vector<LaserFilter::LineSegment> lineSegments_;
+    std::vector<LaserFilter::Line> lines_;
     float  angle_increment_;
     float  angle_increment_sin_;
 

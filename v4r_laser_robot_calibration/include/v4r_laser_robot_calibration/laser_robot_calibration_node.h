@@ -28,14 +28,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#include "ros/ros.h"
+#include <sensor_msgs/LaserScan.h>
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseArray.h>
+#include <opencv2/opencv.hpp>
 
-#ifndef V4R_ELLIPSES_NODE_DEFAULTS_H
-#define V4R_ELLIPSES_NODE_DEFAULTS_H
+#ifndef V4R_LASER_ROBOT_CALIBRATION_NODE
+#define V4R_LASER_ROBOT_CALIBRATION_NODE
 
-#define V4R_ELLIPSES_NODE_DEFAULT_SHOW_CAMERA_IMAGE true
-#define V4R_ELLIPSES_NODE_DEFAULT_SHOW_CAMERA_IMAGE_WAITKEY 5
-#define V4R_ELLIPSES_NODE_DEFAULT_DEBUG_FREEZE false
-#define V4R_ELLIPSES_NODE_DEFAULT_IMAGE_SKIP 0
-#define V4R_ELLIPSES_NODE_DEFAULT_SKIP_SECOND_TF true
 
-#endif // V4R_ELLIPSES_NODE_DEFAULTS_H
+/// ROS Node
+class LaserRobotCalibrationNode {
+public:
+    LaserRobotCalibrationNode ( ros::NodeHandle &n );
+    void callbackLaser (const sensor_msgs::LaserScan::ConstPtr& msg);
+    void callbackMarker (const geometry_msgs::PoseArray::ConstPtr& msg);
+private: // variables
+    ros::NodeHandle n_;
+    ros::NodeHandle n_param_;
+    unsigned callbackCount;
+    ros::Subscriber sub_laser_;
+    ros::Subscriber sub_marker_;
+    cv::Mat debug_view_;
+    sensor_msgs::LaserScan msg_scan_;
+    geometry_msgs::PoseArray msg_marker_;
+    void draw_debug_view();
+    
+};
+
+#endif //V4R_LASER_ROBOT_CALIBRATION_NODE

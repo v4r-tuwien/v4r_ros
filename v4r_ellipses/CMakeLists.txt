@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package( OpenCV REQUIRED )
+link_libraries(${OpenCV_LIBS})
 
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
@@ -95,7 +96,7 @@ add_dependencies(v4r_ellipses_nodelet ${PROJECT_NAME}_gencfg)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(v4r_ellipses_nodelet
-   v4r_ellipses v4r_utils ${catkin_LIBRARIES} ${OpenCV_LIBS}
+   v4r_ellipses v4r_utils ${catkin_LIBRARIES}
 )
 target_link_libraries(v4r_ellipses_node
    v4r_ellipses_nodelet ${catkin_LIBRARIES}

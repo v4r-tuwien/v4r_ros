@@ -1,21 +1,31 @@
 /***************************************************************************
- *   Copyright (C) 2014 by Markus Bader                                    *
- *   markus.bader@tuwien.ac.at                                             *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ * Copyright (c) 2014 Markus Bader <markus.bader@tuwien.ac.at>
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by the TU-Wien.
+ * 4. Neither the name of the TU-Wien nor the
+ *    names of its contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY Markus Bader ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL Markus Bader BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
 #include "v4r_laser_filter/v4r_laser_corner_filter_node.h"
@@ -35,8 +45,9 @@ int main(int argc, char **argv) {
 LaserCornerFilterNode::LaserCornerFilterNode ( ros::NodeHandle &n )
     :n_ ( n ), n_param_ ( "~" ), callbackCount(0) {
     sub_ = n_.subscribe("scan", 1000, &LaserCornerFilterNode::callback, this);
-    init_marker();
-    pub_marker_ =  n.advertise<visualization_msgs::Marker>("visualization_marker", 1000);
+    init_marker_visualization();
+    pub_marker_visualization_ =  n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+    pub_marker_posearray_ =  n.advertise<geometry_msgs::PoseArray>("marker", 10);
 
     reconfigureFnc_ = boost::bind(&LaserCornerFilterNode::callbackParameters, this,  _1, _2);
     reconfigureServer_.setCallback(reconfigureFnc_);
@@ -127,10 +138,11 @@ void LaserCornerFilterNode::callback (const sensor_msgs::LaserScan::ConstPtr& _m
       corners_ = corners_canditates;
     }
     
-    publish_marker ();
+    publish_marker_visualization ();
+    publish_marker_posearray ();
 }
 
-void LaserCornerFilterNode::init_marker () {
+void LaserCornerFilterNode::init_marker_visualization () {
     msg_corner_pose_.header = msg_scan_.header;
     msg_corner_pose_.lifetime = ros::Duration(10,0);
     msg_corner_pose_.ns = "corners";
@@ -163,7 +175,8 @@ void LaserCornerFilterNode::init_marker () {
 
 }
 
-void LaserCornerFilterNode::publish_marker () {
+void LaserCornerFilterNode::publish_marker_visualization () {  
+    if(pub_marker_visualization_.getNumSubscribers() < 1) return;
     geometry_msgs::Point p0, p1;
 
     msg_corner_pose_.header = msg_scan_.header;
@@ -194,8 +207,28 @@ void LaserCornerFilterNode::publish_marker () {
 
 
     }
-    pub_marker_.publish(msg_corner_pose_);
-    pub_marker_.publish(msg_corner_l0_);
-    pub_marker_.publish(msg_corner_l1_);
+    pub_marker_visualization_.publish(msg_corner_pose_);
+    pub_marker_visualization_.publish(msg_corner_l0_);
+    pub_marker_visualization_.publish(msg_corner_l1_);
+
+}
+
+void LaserCornerFilterNode::publish_marker_posearray () {  
+    if(pub_marker_posearray_.getNumSubscribers() < 1) return;
+    
+    
+    msg_marker_posearray_.header = msg_scan_.header;
+    msg_marker_posearray_.poses.resize(corners_.size());
+
+    for(unsigned int i = 0; i < corners_.size(); i++) {
+      msg_marker_posearray_.poses[i].position.x = corners_[i].x();
+      msg_marker_posearray_.poses[i].position.y = corners_[i].y();
+      msg_marker_posearray_.poses[i].position.z = 0;
+      msg_marker_posearray_.poses[i].orientation.x = 0;
+      msg_marker_posearray_.poses[i].orientation.y = 0;
+      msg_marker_posearray_.poses[i].orientation.z = sin(corners_[i].angle()/2.0);
+      msg_marker_posearray_.poses[i].orientation.w = cos(corners_[i].angle()/2.0);      
+    }
+    pub_marker_posearray_.publish(msg_marker_posearray_);
 
 }

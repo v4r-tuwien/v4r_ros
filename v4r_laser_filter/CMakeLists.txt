@@ -5,7 +5,7 @@ project(v4r_laser_filter)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp sensor_msgs std_msgs  rospy dynamic_reconfigure
+  roscpp sensor_msgs std_msgs  geometry_msgs rospy dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions

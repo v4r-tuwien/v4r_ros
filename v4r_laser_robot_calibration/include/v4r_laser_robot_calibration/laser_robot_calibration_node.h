@@ -1,7 +1,7 @@
 /***************************************************************************
  * Copyright (c) 2014 Markus Bader <markus.bader@tuwien.ac.at>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -15,7 +15,7 @@
  * 4. Neither the name of the TU-Wien nor the
  *    names of its contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY Markus Bader ''AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,6 +31,7 @@
 #include "ros/ros.h"
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/PoseArray.h>
 #include <opencv2/opencv.hpp>
 
@@ -40,21 +41,45 @@
 
 /// ROS Node
 class LaserRobotCalibrationNode {
+    cv::Matx<float, 3, 3 > Mr2v_;
+    enum States{
+      INIT,
+      ROTATE_TO_MARKER,
+      ROTATE_NORMAL_TO_MARKER,
+    };
 public:
     LaserRobotCalibrationNode ( ros::NodeHandle &n );
     void callbackLaser (const sensor_msgs::LaserScan::ConstPtr& msg);
     void callbackMarker (const geometry_msgs::PoseArray::ConstPtr& msg);
+    void stateMashine();
 private: // variables
     ros::NodeHandle n_;
     ros::NodeHandle n_param_;
     unsigned callbackCount;
     ros::Subscriber sub_laser_;
     ros::Subscriber sub_marker_;
+    ros::Publisher pub_cmd_;
     cv::Mat debug_view_;
     sensor_msgs::LaserScan msg_scan_;
     geometry_msgs::PoseArray msg_marker_;
     void draw_debug_view();
-    
+    void rotateToMarkerNearPoint(cv::Point2f anchor);
+    cv::Point2f anchor_;
+    cv::Vec3f marker_;
+    States state_;
+
+    static void mouseCallBack ( int evt, int c, int r, int flags, void *param ) {
+        if ( evt == CV_EVENT_LBUTTONDOWN ) {
+            LaserRobotCalibrationNode *pLaserRobotCalibrationNode = (LaserRobotCalibrationNode *) param;
+            cv::Matx<float, 3, 3 > M = pLaserRobotCalibrationNode->Mr2v_.inv();
+            cv::Point2f p(c,r);
+            cv::Point2f anchor(M(0,0)*p.x+M(0,1)*p.y+M(0,2), M(1,0)*p.x+M(1,1)*p.y+M(1,2));
+            pLaserRobotCalibrationNode->rotateToMarkerNearPoint(anchor);
+        }
+        if ( evt == CV_EVENT_MBUTTONDOWN ) {
+        }
+    }
 };
 
 #endif //V4R_LASER_ROBOT_CALIBRATION_NODE
+

@@ -1,0 +1,22 @@
+<package>
+  <name>v4r_msgs</name>
+  <version>0.0.1</version>
+  <description>
+    Messages used by the v4r_ros pkg selection
+  </description>
+  <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
+  <license>BSD</license>
+
+  <url>http://ros.org/wiki/v4r_msgs</url>
+  <author>Markus Bader</author>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+</package>

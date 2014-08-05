@@ -1,0 +1,23 @@
+<package>
+    <name>v4r_ros</name>
+    <version>1.0.0</version>
+    <description>        
+    Vision 4 Robotics (V4R) pkg collection.
+    </description>
+    <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
+    <license>BSD</license>  
+    <author>Markus Bader</author>
+    <author>markus.bader@tuwien.ac.at</author>
+    <url>http://wiki.ros.org/v4r_ros</url>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <run_depend>v4r_msgs</run_depend>
+    <run_depend>v4r_artoolkitplus</run_depend>
+    <run_depend>v4r_ellipses</run_depend>
+    <run_depend>v4r_laser_filter</run_depend>
+    <run_depend>v4r_opencv_cam</run_depend>
+    <run_depend>v4r_uvc</run_depend>
+    <export>
+        <metapackage/>
+    </export>
+</package>

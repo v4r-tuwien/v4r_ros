@@ -82,7 +82,10 @@ void EllipsesDetectionNode::imageCallback(const sensor_msgs::ImageConstPtr& imag
     timeDetectionStart_ = boost::posix_time::microsec_clock::local_time();
     next();
     std::vector<cv::RotatedRect> ellipses;
-    fit_ellipses_opencv (image_mono_->image, cam_model.intrinsicMatrix(), cam_model.distortionCoeffs(), cam_model.projectionMatrix(), image_msg->header.stamp.toBoost() );
+    cv::Mat intrinsicMatrix(cam_model.intrinsicMatrix());
+    cv::Mat distortionCoeffs(cam_model.distortionCoeffs());
+    cv::Mat projectionMatrix(cam_model.projectionMatrix());
+    fit_ellipses_opencv (image_mono_->image, intrinsicMatrix, distortionCoeffs, projectionMatrix, image_msg->header.stamp.toBoost() );
     createRings();
     createTransforms(image_msg->header);
     timeDetectionEnd_ = boost::posix_time::microsec_clock::local_time();

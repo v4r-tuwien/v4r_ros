@@ -1,10 +1,14 @@
 <launch>
 
+  <arg name="device" default="0" />
+  
    <!-- laod camera -->
-  <include file="$(find v4r_opencv_cam)/launch/laptop.launch" />
+  <include file="$(find v4r_opencv_cam)/launch/laptop.launch"  >
+        <arg name="device" value="$(arg device)" />
+  </include>
   
    <!-- laod detection -->
-  <include file="$(find v4r_artoolkitplus)/launch/single_marker.launch" />
+  <include file="$(find v4r_artoolkitplus)/launch/single_marker.launch"/>
 
 </launch>
 

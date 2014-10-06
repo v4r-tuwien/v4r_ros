@@ -1,8 +1,7 @@
-MRPT 
+V4R 
 --------------------
 
-Tools related to the Mobile Robot Programming Toolkit (MRPT). 
-Refer to http://wiki.ros.org/mrpt_common for further documentation.
+Vision 4 Robotics (v4r) pkg collection.
 
 Related stacks:
 

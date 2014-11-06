@@ -21,7 +21,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package( OpenCV REQUIRED )
 link_libraries(${OpenCV_LIBS})
 
-set(Eigen_INCLUDE_DIRS /usr/include/eigen2)
+find_package(cmake_modules REQUIRED)
+
+find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 
 add_message_files(
